@@ -21,6 +21,7 @@ Ruta del vault: `/home/ivan1006/Documents/proyecto-megag/`
 | `Estado del proyecto.md` | Sub-fases completadas / en curso. |
 | `Decisiones tecnicas.md` | Stack y justificación de las decisiones de diseño. |
 | `Tareas pendientes.md` | Detalle técnico de `code_resolver`, `mapper`, `enricher`. |
+| `Diario de sesiones.md` | Registro cronológico de sesiones; léelo al iniciar. |
 
 ---
 ## Rutina de inicio de sesión
@@ -115,8 +116,16 @@ para código nuevo:
 - `templates/proyecto.css`
 - `src/agropecuario/generacion/template_engine.py`
 
-Si tropiezas con ellos durante una tarea, **avísame antes** de borrarlos o
-refactorizarlos — pueden seguir referenciados desde algún test viejo.
+**Aclaración sobre Jinja**: los ÚNICOS archivos Jinja legacy son
+`templates/proyecto.html.j2` y `templates/proyecto.css` (de la generación de
+PDF anterior con WeasyPrint). Las plantillas Jinja del **dashboard**
+(FastAPI + HTMX, comando `agropecuario ui`, en
+`src/agropecuario/ui/templates/`) son ACTIVAS y editables — no confundirlas
+con las legacy.
+
+Si tropiezas con los archivos legacy durante una tarea, **avísame antes** de
+borrarlos o refactorizarlos — pueden seguir referenciados desde algún test
+viejo.
 
 ### Formulario oficial — preservar fidelidad
 - `templates/credito_agro_template.xlsx` se rellena celda a celda; **nunca**
@@ -125,6 +134,10 @@ refactorizarlos — pueden seguir referenciados desde algún test viejo.
   contra ellas, no las reemplaza.
 - Sección 10 (firma del funcionario verificador) **se deja en blanco**
   intencionalmente.
+- **Verificación obligatoria**: tras editar `excel_writer.py` o `enricher.py`,
+  ejecutar `agropecuario fill-template --data data/samples/credito_demo.json`
+  y confirmar que el Excel y el PDF salen idénticos al template ANTES de dar
+  la tarea por terminada.
 
 ---
 
