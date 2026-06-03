@@ -1,0 +1,78 @@
+@page {
+  size: A4;
+  margin: 2cm;
+  @bottom-right {
+    content: "Página " counter(page) " de " counter(pages);
+    font-size: 9pt;
+    color: #666;
+  }
+}
+
+body {
+  font-family: "Helvetica", "Arial", sans-serif;
+  font-size: 11pt;
+  color: #1a1a1a;
+  line-height: 1.45;
+}
+
+header {
+  border-bottom: 2px solid #1d9e75;
+  padding-bottom: 0.8em;
+  margin-bottom: 1.5em;
+}
+
+h1 {
+  color: #1d9e75;
+  font-size: 20pt;
+  margin: 0 0 0.3em 0;
+}
+
+.meta {
+  color: #888;
+  font-size: 9pt;
+  margin: 0;
+}
+
+.seccion {
+  page-break-inside: avoid;
+  margin-bottom: 1.5em;
+}
+
+h2 {
+  color: #639922;
+  font-size: 14pt;
+  border-bottom: 1px solid #c8e6c9;
+  padding-bottom: 0.2em;
+  margin-bottom: 0.6em;
+}
+
+table.campos {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+table.campos th,
+table.campos td {
+  text-align: left;
+  padding: 0.35em 0.6em;
+  border: 1px solid #dcdcdc;
+  vertical-align: top;
+}
+
+table.campos th {
+  width: 35%;
+  background-color: #f0fff4;
+  font-weight: 600;
+}
+
+.narrativa {
+  text-align: justify;
+  background: #fbfbfb;
+  border-left: 3px solid #1d9e75;
+  padding: 0.6em 1em;
+}
+
+pre {
+  font-size: 9pt;
+  white-space: pre-wrap;
+}

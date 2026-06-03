@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>{{ titulo }}</title>
+</head>
+<body>
+  <header>
+    <h1>{{ titulo }}</h1>
+    <p class="meta">
+      Generado automáticamente · Fuente: correo {{ project.fuente_email_id }}
+    </p>
+  </header>
+
+  {% for seccion in template.secciones %}
+    <section class="seccion">
+      <h2>{{ seccion.titulo }}</h2>
+
+      {% if seccion.generado_por_llm %}
+        <div class="narrativa">
+          {{ project.secciones_generadas.get(seccion.id, '(No generado)') | replace('\n', '<br/>') | safe }}
+        </div>
+      {% else %}
+        <table class="campos">
+          <tbody>
+            {% for campo in seccion.campos %}
+              {% set valor = project.model_dump().get(campo) or project.campos_opcionales.get(campo) %}
+              <tr>
+                <th>{{ campo }}</th>
+                <td>
+                  {% if valor is mapping or valor is iterable and valor is not string %}
+                    <pre>{{ valor }}</pre>
+                  {% else %}
+                    {{ valor if valor is not none else '—' }}
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% endif %}
+    </section>
+  {% endfor %}
+
+  {% if project.calculados %}
+    <section class="seccion">
+      <h2>Campos calculados</h2>
+      <table class="campos">
+        <tbody>
+          {% for c in project.calculados %}
+            <tr>
+              <th>{{ c.field_id }}</th>
+              <td>{{ c.valor }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  {% endif %}
+</body>
+</html>

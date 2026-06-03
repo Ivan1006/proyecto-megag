@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Agente Agropecuario{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen">
+  <header class="bg-white border-b border-slate-200">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center gap-8">
+      <a href="/" class="text-lg font-semibold text-emerald-700 flex items-center gap-2">
+        <span class="inline-block w-2 h-2 bg-emerald-500 rounded-full"></span>
+        Agropecuario · Trazabilidad
+      </a>
+      <nav class="flex gap-6 text-sm">
+        <a href="/"
+           class="{% if active == 'dashboard' %}text-emerald-700 font-medium{% else %}text-slate-600 hover:text-slate-900{% endif %}">
+          Dashboard
+        </a>
+        <a href="/threads"
+           class="{% if active == 'threads' %}text-emerald-700 font-medium{% else %}text-slate-600 hover:text-slate-900{% endif %}">
+          Hilos procesados
+        </a>
+      </nav>
+      <div class="ml-auto text-xs text-slate-400">
+        <span hx-get="/api/health" hx-trigger="load, every 30s" hx-swap="innerHTML">·</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-6 py-8">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="max-w-7xl mx-auto px-6 py-6 text-xs text-slate-400">
+    Crédito Agro · Bancolombia/Finagro · agente multi-etapa
+  </footer>
+</body>
+</html>

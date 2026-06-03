@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block title %}Dashboard · Agropecuario{% endblock %}
+
+{% block content %}
+<h1 class="text-2xl font-semibold mb-6">Dashboard</h1>
+
+{% macro kpi_card(label, value, hint, color, href=None) %}
+  {% set base = "rounded-lg shadow-sm border border-slate-200 p-5 transition" %}
+  {% if href %}
+    <a href="{{ href }}"
+       class="block bg-white {{ base }} hover:shadow-md hover:border-emerald-300 cursor-pointer group">
+  {% else %}
+    <div class="bg-white {{ base }}">
+  {% endif %}
+    <div class="text-xs uppercase tracking-wide text-slate-500 flex items-center justify-between">
+      <span>{{ label }}</span>
+      {% if href %}
+      <span class="opacity-0 group-hover:opacity-100 text-emerald-600 text-sm">→</span>
+      {% endif %}
+    </div>
+    <div class="text-3xl font-semibold mt-2 {{ color }}">{{ value }}</div>
+    <div class="text-xs text-slate-400 mt-1">{{ hint }}</div>
+  {% if href %}
+    </a>
+  {% else %}
+    </div>
+  {% endif %}
+{% endmacro %}
+
+<section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+
+  {{ kpi_card(
+      "Proyectos generados",
+      metrics.success,
+      "de " ~ metrics.total ~ " runs totales",
+      "text-emerald-700",
+      "/threads?status=generated") }}
+
+  {{ kpi_card(
+      "Tasa de éxito",
+      "%.0f%%"|format(metrics.success_rate * 100),
+      "en todo el histórico",
+      "text-slate-800") }}
+
+  {{ kpi_card(
+      "Últimos 7 días",
+      metrics.last_7_days,
+      metrics.last_24h ~ " en 24 h",
+      "text-slate-800") }}
+
+  {{ kpi_card(
+      "Duración media",
+      metrics.avg_duration_ms | humanize_ms,
+      "por hilo procesado",
+      "text-slate-800") }}
+
+</section>
+
+<section class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
+
+  {{ kpi_card(
+      "Pendientes",
+      metrics.in_progress,
+      "runs sin finalizar",
+      "text-slate-700",
+      "/threads?in_progress=1") }}
+
+  {{ kpi_card(
+      "Incompletos",
+      metrics.incomplete,
+      "esperan info adicional",
+      "text-amber-700",
+      "/threads?status=incomplete") }}
+
+  {{ kpi_card(
+      "Fallidos",
+      metrics.failed,
+      "requieren revisión",
+      "text-rose-700",
+      "/threads?status=failed") }}
+
+</section>
+
+<section>
+  <div class="flex items-baseline justify-between mb-3">
+    <h2 class="text-lg font-semibold">Últimos 10 runs</h2>
+    <a href="/threads" class="text-sm text-emerald-700 hover:underline">ver todos →</a>
+  </div>
+
+  <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+    {% if recent %}
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 text-xs uppercase text-slate-500">
+        <tr>
+          <th class="px-4 py-2 text-left">#</th>
+          <th class="px-4 py-2 text-left">Asunto</th>
+          <th class="px-4 py-2 text-left">Remitente</th>
+          <th class="px-4 py-2 text-left">Estado</th>
+          <th class="px-4 py-2 text-left">Iniciado</th>
+          <th class="px-4 py-2 text-left">Duración</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in recent %}
+        <tr class="border-t border-slate-100 hover:bg-slate-50 cursor-pointer"
+            onclick="location.href='/threads/{{ r.id }}'">
+          <td class="px-4 py-2 text-slate-500">{{ r.id }}</td>
+          <td class="px-4 py-2 font-medium">{{ r.subject or "(sin asunto)" }}</td>
+          <td class="px-4 py-2 text-slate-600">{{ r.sender or "—" }}</td>
+          <td class="px-4 py-2">
+            <span class="inline-block px-2 py-0.5 rounded text-xs {{ r.status | status_color }}">
+              {{ r.status }}
+            </span>
+          </td>
+          <td class="px-4 py-2 text-slate-500">{{ r.started_at[:19] if r.started_at else "—" }}</td>
+          <td class="px-4 py-2 text-slate-500">{{ r.duration_ms | humanize_ms }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="p-6 text-slate-500 text-sm">
+      Sin runs aún. Lanza <code class="bg-slate-100 px-1 rounded">agropecuario watch-bot --once</code>
+      o usa <code class="bg-slate-100 px-1 rounded">agropecuario seed-demo</code> para cargar datos de prueba.
+    </p>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

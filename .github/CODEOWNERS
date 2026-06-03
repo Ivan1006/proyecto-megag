@@ -1,0 +1,25 @@
+# Propietarios del código por área. Cuando se abre un PR que toca estos paths,
+# GitHub auto-requiere review del owner correspondiente.
+#
+# Sintaxis: <path-glob>  <usuario1> [<usuario2> ...]
+
+# Default — cualquier cambio requiere review del owner principal
+*                              @Ivan1006
+
+# Ingesta / Gmail
+/src/agropecuario/ingesta/     @Ivan1006
+
+# Validación / reglas de negocio
+/src/agropecuario/validacion/  @Ivan1006
+/config/rules.yaml             @Ivan1006
+
+# Generación de entregables
+/src/agropecuario/generacion/  @Ivan1006
+/templates/                    @Ivan1006
+
+# Dashboard / UI
+/src/agropecuario/ui/          @Ivan1006
+
+# Infraestructura
+/.github/                      @Ivan1006
+/pyproject.toml                @Ivan1006

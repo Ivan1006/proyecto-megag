@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+
+    <!-- TITULO -->
+    <mxCell id="title" value="Arquitectura: Agente Generador de Proyectos Agropecuarios" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;fontColor=#1a1a1a;" vertex="1" parent="1">
+      <mxGeometry x="80" y="20" width="1000" height="40" as="geometry" />
+    </mxCell>
+
+    <!-- ============================================================ -->
+    <!-- CAPA 0: FUENTE -->
+    <!-- ============================================================ -->
+    <mxCell id="lbl0" value="FUENTE DE DATOS" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=10;fontStyle=1;fontColor=#666666;" vertex="1" parent="1">
+      <mxGeometry x="80" y="75" width="160" height="20" as="geometry" />
+    </mxCell>
+
+    <mxCell id="gmail" value="&lt;b&gt;Gmail corporativo&lt;/b&gt;&lt;br/&gt;&lt;font style=&apos;font-size:10px&apos;&gt;Bandeja de entrada de la organización&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="430" y="70" width="300" height="50" as="geometry" />
+    </mxCell>
+
+    <!-- ============================================================ -->
+    <!-- CAPA 1: AGENTE 1 - INGESTA -->
+    <!-- ============================================================ -->
+    <mxCell id="lbl1" value="AGENTE 1 · INGESTA Y EXTRACCIÓN" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=10;fontStyle=1;fontColor=#666666;" vertex="1" parent="1">
+      <mxGeometry x="80" y="155" width="260" height="20" as="geometry" />
+    </mxCell>
+
+    <!-- Contenedor agente 1 -->
+    <mxCell id="ag1_container" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f0fff4;strokeColor=#1D9E75;dashed=1;dashPattern=6 4;strokeWidth=2;verticalAlign=top;" vertex="1" parent="1">
+      <mxGeometry x="80" y="175" width="1000" height="180" as="geometry" />
+    </mxCell>
+
+    <mxCell id="ag1_monitor" value="&lt;b&gt;Monitor de correos&lt;/b&gt;&lt;br/&gt;&lt;font style=&apos;font-size:10px&apos;&gt;Polling / webhooks Gmail API&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5f5e3;strokeColor=#1D9E75;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="110" y="210" width="220" height="60" as="geometry" />
+    </mxCell>
+
+    <mxCell id="ag1_extractor" value="&lt;b&gt;Extractor de contenido&lt;/b&gt;&lt;br/&gt;&lt;font style=&apos;font-size:10px&apos;&gt;Cuerpo del correo + adjuntos&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5f5e3;strokeColor=#1D9E75;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="440" y="210" width="220" height="60" as="geometry" />
+    </mxCell>
+
+    <mxCell id="ag1_parser" value="&lt;b&gt;Parser de adjuntos&lt;/b&gt;&lt;br/&gt;&lt;font style=&apos;font-size:10px&apos;&gt;PDF · Excel · Word · Imágenes&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5f5e3;strokeColor=#1D9E75;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="770" y="210" width="220" height="60" as="geometry" />
+    </mxCell>
+
+    <mxCell id="ag1_store" value="&lt;b&gt;Almacenamiento temporal estructurado&lt;/b&gt;&lt;br/&gt;&lt;font style=&apos;font-size:10px&apos;&gt;Metadatos del correo · Texto extraído · Archivos adjuntos&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#a9dfbf;strokeColor=#1D9E75;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="280" y="300" width="600" height="40" as="geometry" />
+    </mxCell>
+
+    <!-- ============================================================ -->
+    <!-- CAPA 2: AGENTE 2 - VALIDACION -->
+    <!-- ============================================================ -->
+    <mxCell id="lbl2" value="AGENTE 2 · VALIDACIÓN Y REGLAS" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=10;fontStyle=1;fontColor=#666666;" vertex="1" parent="1">
+      <mxGeometry x="80" y="385" width="260" height="20" as="geometry" />
+    </mxCell>
+
+    <mxCell id="ag2_container" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f0ff;strokeColor=#7F77DD;dashed=1;dashPattern=6 4;strokeWidth=2;verticalAlign=top;" vertex="1" parent="1">
+      <mxGeometry x="80" y="405" width="1000" height="220" as="geometry" />
+    </mxCell>
+
+    <mxCell id="ag2_rules" value="&lt;b&gt;Motor de reglas&lt;/b&gt;&lt;br/&gt;&lt;font style=&apos;font-size:10px&apos;&gt;Reglas configurables por negocio&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8e0f7;strokeColor=#7F77DD;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="110" y="440" width="220" height="60" as="geometry" />
+    </mxCell>
+
+    <mxCell id="ag2_validator" value="&lt;b&gt;Validador de campos&lt;/b&gt;&lt;br/&gt;&lt;font style=&apos;font-size:10px&apos;&gt;Requeridos vs. opcionales&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8e0f7;strokeColor=#7F77DD;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="440" y="440" width="220" height="60" as="geometry" />
+    </mxCell>
+
+    <mxCell id="ag2_gaps" value="&lt;b&gt;Gestor de brechas&lt;/b&gt;&lt;br/&gt;&lt;font style=&apos;font-size:10px&apos;&gt;Detecta faltantes e inconsistencias&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8e0f7;strokeColor=#7F77DD;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="770" y="440" width="220" height="60" as="geometry" />
+    </mxCell>
+
+    <!-- Decision diamond -->
+    <mxCell id="ag2_decision" value="&lt;b&gt;¿Información suficiente?&lt;/b&gt;" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="430" y="530" width="300" height="70" as="geometry" />
+    </mxCell>
+
+    <!-- Notificación incompleto -->
+    <mxCell id="ag2_notify" value="&lt;b&gt;Notificación al remitente&lt;/b&gt;&lt;br/&gt;&lt;font style=&apos;font-size:10px&apos;&gt;Solicita información faltante&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8d7da;strokeColor=#dc3545;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="110" y="537" width="220" height="60" as="geometry" />
+    </mxCell>
+
+    <!-- ============================================================ -->
+    <!-- CAPA 3: AGENTE 3 - GENERACION -->
+    <!-- ============================================================ -->
+    <mxCell id="lbl3" value="AGENTE 3 · GENERACIÓN DEL PROYECTO" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=10;fontStyle=1;fontColor=#666666;" vertex="1" parent="1">
+      <mxGeometry x="80" y="635" width="300" height="20" as="geometry" />
+    </mxCell>
+
+    <mxCell id="ag3_container" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f0fff0;strokeColor=#639922;dashed=1;dashPattern=6 4;strokeWidth=2;verticalAlign=top;" vertex="1" parent="1">
+      <mxGeometry x="80" y="655" width="1000" height="180" as="geometry" />
+    </mxCell>
+
+    <mxCell id="ag3_template" value="&lt;b&gt;Motor de plantilla&lt;/b&gt;&lt;br/&gt;&lt;font style=&apos;font-size:10px&apos;&gt;Secciones predefinidas del proyecto&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#c8e6c9;strokeColor=#639922;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="110" y="690" width="220" height="60" as="geometry" />
+    </mxCell>
+
+    <mxCell id="ag3_mapper" value="&lt;b&gt;Mapeador de campos&lt;/b&gt;&lt;br/&gt;&lt;font style=&apos;font-size:10px&apos;&gt;Correo → campos de plantilla&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#c8e6c9;strokeColor=#639922;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="440" y="690" width="220" height="60" as="geometry" />
+    </mxCell>
+
+    <mxCell id="ag3_enricher" value="&lt;b&gt;Enriquecedor de datos&lt;/b&gt;&lt;br/&gt;&lt;font style=&apos;font-size:10px&apos;&gt;Cálculos + completar brechas&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#c8e6c9;strokeColor=#639922;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="770" y="690" width="220" height="60" as="geometry" />
+    </mxCell>
+
+    <!-- ============================================================ -->
+    <!-- CAPA 4: ENTREGABLES FINALES -->
+    <!-- ============================================================ -->
+    <mxCell id="lbl4" value="ENTREGABLES FINALES" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=10;fontStyle=1;fontColor=#666666;" vertex="1" parent="1">
+      <mxGeometry x="80" y="860" width="200" height="20" as="geometry" />
+    </mxCell>
+
+    <mxCell id="out_pdf" value="&lt;b&gt;📄 Proyecto Agropecuario&lt;/b&gt;&lt;br/&gt;&lt;font style=&apos;font-size:10px&apos;&gt;Documento PDF&lt;br/&gt;Informe completo según plantilla&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fce8d5;strokeColor=#d35400;fontSize=11;strokeWidth=2;" vertex="1" parent="1">
+      <mxGeometry x="250" y="880" width="240" height="70" as="geometry" />
+    </mxCell>
+
+    <mxCell id="out_excel" value="&lt;b&gt;📊 Proyecto Agropecuario&lt;/b&gt;&lt;br/&gt;&lt;font style=&apos;font-size:10px&apos;&gt;Archivo Excel&lt;br/&gt;Datos, cálculos y tablas del proyecto&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5f0d5;strokeColor=#217346;fontSize=11;strokeWidth=2;" vertex="1" parent="1">
+      <mxGeometry x="670" y="880" width="240" height="70" as="geometry" />
+    </mxCell>
+
+    <!-- Almacenamiento final -->
+    <mxCell id="out_storage" value="&lt;b&gt;Almacenamiento y notificación&lt;/b&gt;&lt;br/&gt;&lt;font style=&apos;font-size:10px&apos;&gt;Google Drive · Sistema de gestión · Notificación al equipo&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="330" y="975" width="500" height="50" as="geometry" />
+    </mxCell>
+
+    <!-- ============================================================ -->
+    <!-- COMPONENTE LATERAL: CONFIGURACION DE REGLAS -->
+    <!-- ============================================================ -->
+    <mxCell id="rules_config" value="&lt;b&gt;⚙ Configuración de reglas&lt;/b&gt;&lt;br/&gt;&lt;font style=&apos;font-size:10px&apos;&gt;Reglas de validación agropecuaria&lt;br/&gt;Campos requeridos · Rangos · Formatos&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff9e6;strokeColor=#d6b656;fontSize=11;dashed=1;" vertex="1" parent="1">
+      <mxGeometry x="1110" y="440" width="210" height="80" as="geometry" />
+    </mxCell>
+
+    <!-- ============================================================ -->
+    <!-- FLECHAS -->
+    <!-- ============================================================ -->
+
+    <!-- Gmail → Monitor -->
+    <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#6c8ebf;strokeWidth=2;" edge="1" source="gmail" target="ag1_monitor" parent="1">
+      <mxCell as="geometry"/>
+    </mxCell>
+
+    <!-- Monitor → Extractor -->
+    <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#1D9E75;strokeWidth=1.5;" edge="1" source="ag1_monitor" target="ag1_extractor" parent="1">
+      <mxCell as="geometry"/>
+    </mxCell>
+
+    <!-- Extractor → Parser -->
+    <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#1D9E75;strokeWidth=1.5;" edge="1" source="ag1_extractor" target="ag1_parser" parent="1">
+      <mxCell as="geometry"/>
+    </mxCell>
+
+    <!-- Monitor → Store -->
+    <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#888780;strokeWidth=1;" edge="1" source="ag1_monitor" target="ag1_store" parent="1">
+      <mxCell as="geometry"/>
+    </mxCell>
+
+    <!-- Extractor → Store -->
+    <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#888780;strokeWidth=1;" edge="1" source="ag1_extractor" target="ag1_store" parent="1">
+      <mxCell as="geometry"/>
+    </mxCell>
+
+    <!-- Parser → Store -->
+    <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#888780;strokeWidth=1;" edge="1" source="ag1_parser" target="ag1_store" parent="1">
+      <mxCell as="geometry"/>
+    </mxCell>
+
+    <!-- Store → Agente 2 Rules -->
+    <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#7F77DD;strokeWidth=2;" edge="1" source="ag1_store" target="ag2_rules" parent="1">
+      <mxCell as="geometry"/>
+    </mxCell>
+
+    <!-- Store → Agente 2 Validator -->
+    <mxCell id="e8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#7F77DD;strokeWidth=2;" edge="1" source="ag1_store" target="ag2_validator" parent="1">
+      <mxCell as="geometry"/>
+    </mxCell>
+
+    <!-- Store → Agente 2 Gaps -->
+    <mxCell id="e9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#7F77DD;strokeWidth=2;" edge="1" source="ag1_store" target="ag2_gaps" parent="1">
+      <mxCell as="geometry"/>
+    </mxCell>
+
+    <!-- Rules → Decision -->
+    <mxCell id="e10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#7F77DD;strokeWidth=1;" edge="1" source="ag2_rules" target="ag2_decision" parent="1">
+      <mxCell as="geometry"/>
+    </mxCell>
+
+    <!-- Validator → Decision -->
+    <mxCell id="e11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#7F77DD;strokeWidth=1;" edge="1" source="ag2_validator" target="ag2_decision" parent="1">
+      <mxCell as="geometry"/>
+    </mxCell>
+
+    <!-- Gaps → Decision -->
+    <mxCell id="e12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#7F77DD;strokeWidth=1;" edge="1" source="ag2_gaps" target="ag2_decision" parent="1">
+      <mxCell as="geometry"/>
+    </mxCell>
+
+    <!-- Decision → Notify (NO) -->
+    <mxCell id="e13" value="No / Incompleto" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#dc3545;strokeWidth=1.5;dashed=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" edge="1" source="ag2_decision" target="ag2_notify" parent="1">
+      <mxCell as="geometry"/>
+    </mxCell>
+
+    <!-- Decision → Agente 3 (SI) -->
+    <mxCell id="e14" value="Aprobado" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#639922;strokeWidth=2;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" source="ag2_decision" target="ag3_template" parent="1">
+      <mxCell as="geometry"/>
+    </mxCell>
+
+    <!-- Template → Mapper -->
+    <mxCell id="e15" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#639922;strokeWidth=1.5;" edge="1" source="ag3_template" target="ag3_mapper" parent="1">
+      <mxCell as="geometry"/>
+    </mxCell>
+
+    <!-- Mapper → Enricher -->
+    <mxCell id="e16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#639922;strokeWidth=1.5;" edge="1" source="ag3_mapper" target="ag3_enricher" parent="1">
+      <mxCell as="geometry"/>
+    </mxCell>
+
+    <!-- Agente 3 → PDF -->
+    <mxCell id="e17" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#d35400;strokeWidth=2;" edge="1" source="ag3_enricher" target="out_pdf" parent="1">
+      <mxCell as="geometry"/>
+    </mxCell>
+
+    <!-- Agente 3 → Excel -->
+    <mxCell id="e18" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#217346;strokeWidth=2;" edge="1" source="ag3_enricher" target="out_excel" parent="1">
+      <mxCell as="geometry"/>
+    </mxCell>
+
+    <!-- Template → PDF también -->
+    <mxCell id="e19" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#d35400;strokeWidth=1.5;dashed=1;" edge="1" source="ag3_template" target="out_pdf" parent="1">
+      <mxCell as="geometry"/>
+    </mxCell>
+
+    <!-- Mapper → Excel también -->
+    <mxCell id="e20" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#217346;strokeWidth=1.5;dashed=1;" edge="1" source="ag3_mapper" target="out_excel" parent="1">
+      <mxCell as="geometry"/>
+    </mxCell>
+
+    <!-- PDF → Storage -->
+    <mxCell id="e21" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#6c8ebf;strokeWidth=1.5;" edge="1" source="out_pdf" target="out_storage" parent="1">
+      <mxCell as="geometry"/>
+    </mxCell>
+
+    <!-- Excel → Storage -->
+    <mxCell id="e22" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#6c8ebf;strokeWidth=1.5;" edge="1" source="out_excel" target="out_storage" parent="1">
+      <mxCell as="geometry"/>
+    </mxCell>
+
+    <!-- Rules config → Motor de reglas -->
+    <mxCell id="e23" value="configura" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#d6b656;strokeWidth=1.5;dashed=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" edge="1" source="rules_config" target="ag2_rules" parent="1">
+      <mxCell as="geometry"/>
+    </mxCell>
+
+    <!-- Notify → Gmail (retroalimentacion) -->
+    <mxCell id="e24" value="solicita más info" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#dc3545;strokeWidth=1;dashed=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" edge="1" source="ag2_notify" target="gmail" parent="1">
+      <mxCell as="geometry">
+        <Array as="points">
+          <mxPoint x="220" y="100" />
+          <mxPoint x="580" y="100" />
+        </Array>
+      </mxCell>
+    </mxCell>
+
+  </root>
+</mxGraphModel>

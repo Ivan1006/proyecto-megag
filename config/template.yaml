@@ -1,0 +1,82 @@
+# Plantilla del proyecto agropecuario.
+# Define las secciones y los campos que se renderizarán en PDF/Excel.
+
+version: 1
+
+proyecto:
+  titulo_formato: "Proyecto Agropecuario — {productor_nombre} — {predio_nombre}"
+
+secciones:
+  - id: datos_generales
+    titulo: "1. Datos generales"
+    campos:
+      - productor_nombre
+      - productor_documento
+      - telefono_contacto
+      - correo_contacto
+
+  - id: ubicacion
+    titulo: "2. Ubicación del predio"
+    campos:
+      - predio_nombre
+      - ubicacion_municipio
+      - ubicacion_departamento
+      - coordenadas_gps
+      - predio_hectareas
+
+  - id: actividad
+    titulo: "3. Actividad productiva"
+    campos:
+      - cultivo
+      - historial_cultivo
+      - asistencia_tecnica
+
+  - id: financiero
+    titulo: "4. Información financiera"
+    campos:
+      - monto_solicitado
+      - monto_por_hectarea   # calculado
+      - cronograma_desembolsos  # calculado
+
+  - id: analisis
+    titulo: "5. Análisis y viabilidad"
+    generado_por_llm: true
+    prompt: |
+      Con base en los datos del productor, cultivo, región y monto solicitado,
+      genera un análisis breve (máximo 400 palabras) de viabilidad del proyecto
+      en español. Incluye: fortalezas, riesgos climáticos/económicos típicos y
+      recomendaciones de seguimiento.
+
+  - id: conclusiones
+    titulo: "6. Conclusiones y recomendaciones"
+    generado_por_llm: true
+    prompt: |
+      Redacta conclusiones accionables (máximo 200 palabras) para el comité
+      de evaluación.
+
+# Campos calculados que el enricher debe producir.
+calculados:
+  - id: monto_por_hectarea
+    formula: "monto_solicitado / predio_hectareas"
+    tipo: number
+    formato: "currency_cop"
+
+  - id: cronograma_desembolsos
+    tipo: tabla
+    descripcion: "Distribuye el monto en cuotas según duración estimada del ciclo productivo"
+
+# Configuración de salida.
+salida:
+  pdf:
+    habilitado: true
+    plantilla_html: "templates/proyecto.html.j2"
+    estilo_css: "templates/proyecto.css"
+  excel:
+    habilitado: true
+    hojas:
+      - nombre: "Resumen"
+        tipo: resumen
+      - nombre: "Datos"
+        tipo: tabla_campos
+      - nombre: "Cálculos"
+        tipo: tabla_calculados

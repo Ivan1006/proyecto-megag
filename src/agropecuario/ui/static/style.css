@@ -1,0 +1,3 @@
+/* Estilos complementarios (Tailwind cubre la mayor parte). */
+body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+code { font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, monospace; }

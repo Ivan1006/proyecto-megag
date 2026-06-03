@@ -1,0 +1,125 @@
+# Mapeo campo → celda en templates/credito_agro_template.xlsx
+# Para celdas combinadas, escribimos en la esquina superior-izquierda.
+# Edita aquí (sin tocar código) si Bancolombia cambia el formato.
+
+version: 1
+hoja: "Hoja1"
+
+# === SECCIÓN 1: Datos del intermediario y beneficiario ===
+campos:
+  # Intermediario financiero
+  intermediario_financiero: B7        # B7:F7
+  oficina:                  G7        # G7:K7
+  oficina_departamento:     L7        # L7:O7
+  oficina_municipio:        P7        # P7:S7
+  oficina_direccion:        B9        # B9:K9
+  oficina_telefono:         L9        # L9:O9
+  oficina_fax:              P9        # P9:S9
+
+  # Beneficiario
+  beneficiario_razon_social: B11      # B11:K11
+  # El tipo de identificación se marca con "X" en la fila correspondiente,
+  # y el número va en la celda contigua de esa misma fila.
+  # Manejado en _write_id_beneficiario (no llenar L11/N11 directamente).
+  beneficiario_direccion:    B13      # B13:G13
+  beneficiario_telefono:     H13
+  beneficiario_municipio:    I13
+  beneficiario_departamento: J13      # J13:K13
+
+  # Tipo de beneficiario: marca con "X" la celda correspondiente
+  # Solo una de estas debe tener valor.
+  marca_beneficiario_pequeno: F14
+  marca_beneficiario_mediano: H14
+  marca_beneficiario_grande:  J14
+
+  monto_total_activos: L15            # L15:S15
+  fecha_balance_dia:   F16
+  fecha_balance_mes:   H16
+  fecha_balance_anio:  J16
+
+  # Predio
+  predio_nombre_direccion:   B18      # B18:K18
+  predio_extension_has:      L18      # L18 (single)
+  predio_extension_mts2:     P18      # P18 (single)
+  predio_departamento:       B20      # B20:G20
+  predio_municipio:          H20      # H20:K20
+  predio_vereda:             L20      # L20:S20
+
+  # Tenencia: marca con "X"
+  marca_tenencia_propia:   E22
+  marca_tenencia_arriendo: G22
+  marca_tenencia_otra:     L22
+  tenencia_otra_cual:      N22       # N22:S22
+
+# === SECCIÓN 2: Forma de llegar al sitio ===
+# Texto libre que ocupa hasta 3 filas (B25:S27).
+forma_de_llegar: B25                 # B25:S25 (una sola línea, con saltos)
+
+# === SECCIÓN 3: Justificación técnica ===
+# Bloque grande B30:S42 — usar wrap_text en el writer.
+justificacion_tecnica: B30           # B30:S42
+
+# === SECCIÓN 4: Modalidades de pago ===
+modalidad_pago_capital:   G43        # G43:I43
+modalidad_pago_intereses: P43        # P43:S43
+
+# === SECCIÓN 5: Tabla de actividades a financiar ===
+# 4 filas máximo (49-52). Cada actividad tiene 8 valores.
+# El total (fila 53) está como fórmula =SUM y se calcula automático en Excel.
+tabla_actividades:
+  primera_fila: 49
+  ultima_fila: 52
+  columnas:
+    cod_linea:           B
+    cod_rubro:           C
+    descripcion_rubro:   D     # D:G merged
+    unidades_hectareas:  H
+    valor_total_proyecto: I
+    valor_total_credito:  J    # J:K merged
+    plazo_meses:          L    # L:M merged
+    periodo_gracia_meses: N    # N:P merged
+    puntos_dtf:           Q    # Q:S merged
+
+# Cronograma (fila 56 — debajo de los headers de fila 55)
+cronograma_fecha_inicial: I56        # I56:L56 aprox
+cronograma_fecha_final:   M56        # M56:O56 aprox
+
+# === SECCIÓN 6: Actividad económica productiva ===
+actividad_economica_descripcion: H57  # H57:K57
+# El código va separado: un dígito por celda (ver `campos_por_digito` abajo).
+
+# === SECCIÓN 7: Garantía FAG ===
+# Las celdas con "SI" y "NO" son etiquetas; la marca X va en la celda contigua.
+marca_fag_si: G59
+marca_fag_no: I59
+fag_cobertura_pct: N59       # N59:O59 (P59 contiene la etiqueta '%')
+
+# === Sección 10: NO se llena ===
+# La firma del funcionario verificador queda en blanco.
+
+# === Tipo de identificación del beneficiario ===
+# Cada fila representa una opción. Solo se marca la elegida.
+# El número de identificación se escribe SOLO en la fila marcada.
+identificacion_beneficiario:
+  cc:
+    marca: M12       # X cuando es Cédula de Ciudadanía
+    numero: N12      # N12:S12 (slot del número)
+  nit:
+    marca: M13       # X cuando es NIT
+    numero: N13      # N13:S13
+  ce:
+    marca: M14       # X cuando es Cédula de Extranjería
+    numero: N14      # N14:S14
+
+# === Campos cuyo valor se distribuye un dígito por celda ===
+# Útil para códigos de actividad/destino que tienen un cuadro por dígito.
+campos_por_digito:
+  actividad_economica_codigo:
+    celdas: [N57, O57, P57, Q57]
+    longitud: 4          # padea con ceros a la izquierda si es más corto
+    alinear: derecha     # alineación al rellenar (derecha = los ceros van adelante)
+
+# Marcador usado para celdas hardcoded (referencia para defaults.yaml).
+# No tocar.
+hardcoded:
+  intermediario_financiero: B7

@@ -1,0 +1,66 @@
+# ───────── Python ─────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+ENV/
+
+# ───────── Entornos / secretos ─────────
+.env
+.env.local
+.env.*.local
+secrets/
+*.json.key
+client_secret*.json
+token*.json
+credentials*.json
+
+# ───────── Datos y salidas locales ─────────
+data/
+output/
+*.sqlite
+*.sqlite-journal
+*.db
+
+# ───────── Build / packaging ─────────
+dist/
+build/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# ───────── IDE / Editores ─────────
+.vscode/
+.idea/
+.DS_Store
+*.swp
+*.swo
+*~
+.~lock.*#
+
+# ───────── Test / lint / coverage ─────────
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+.tox/
+
+# ───────── Claude Code / workspace ─────────
+.claude/
+.claude-cache/
+
+# ───────── Logs ─────────
+*.log
+logs/
+
+# ───────── OS / temporales ─────────
+Thumbs.db
+ehthumbs.db
+Desktop.ini

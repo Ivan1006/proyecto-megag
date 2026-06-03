@@ -1,0 +1,142 @@
+# Reglas de validación para el formulario Bancolombia/Finagro.
+# Editar aquí (sin tocar código) para ajustar requisitos.
+
+version: 2
+
+campos_requeridos:
+  # === Beneficiario ===
+  - id: beneficiario_razon_social
+    descripcion: "Nombre o razón social del beneficiario"
+    tipo: string
+
+  - id: beneficiario_id_tipo
+    descripcion: "Tipo de identificación (C.C., NIT, C.E.)"
+    tipo: string
+    valores_permitidos: ["C.C.", "NIT", "C.E."]
+    alias: ["tipo_documento", "tipo_id"]
+
+  - id: beneficiario_id_numero
+    descripcion: "Número de identificación"
+    tipo: string
+    patron: "^[0-9.\\-]{6,20}$"
+    alias: ["numero_documento", "cedula", "nit"]
+
+  - id: beneficiario_direccion
+    descripcion: "Dirección del beneficiario"
+    tipo: string
+
+  - id: beneficiario_telefono
+    descripcion: "Teléfono del beneficiario"
+    tipo: string
+
+  - id: beneficiario_municipio
+    descripcion: "Municipio del beneficiario"
+    tipo: string
+
+  - id: beneficiario_departamento
+    descripcion: "Departamento del beneficiario"
+    tipo: string
+
+  - id: tipo_beneficiario
+    descripcion: "Pequeño / Mediano / Grande productor"
+    tipo: string
+    valores_permitidos: ["pequeño", "pequeno", "mediano", "grande"]
+
+  # === Predio ===
+  - id: predio_nombre_direccion
+    descripcion: "Nombre y/o dirección del predio"
+    tipo: string
+
+  - id: predio_extension_has
+    descripcion: "Extensión del predio en hectáreas"
+    tipo: number
+    rango: { min: 0.01, max: 100000 }
+
+  - id: predio_departamento
+    descripcion: "Departamento del predio"
+    tipo: string
+
+  - id: predio_municipio
+    descripcion: "Municipio del predio"
+    tipo: string
+
+  - id: predio_vereda
+    descripcion: "Vereda del predio"
+    tipo: string
+
+  - id: tenencia
+    descripcion: "Tenencia del predio (propia/arriendo/otra)"
+    tipo: string
+    valores_permitidos: ["propia", "arriendo", "otra"]
+
+  # === Sección 2 y 3 ===
+  - id: forma_de_llegar
+    descripcion: "Forma detallada de llegar al sitio de la inversión"
+    tipo: string
+
+  - id: justificacion_tecnica
+    descripcion: "Justificación técnica y descripción de las inversiones"
+    tipo: string
+
+  # === Sección 5: tabla de actividades ===
+  - id: actividades
+    descripcion: "Lista de actividades a financiar (mínimo 1)"
+    tipo: array
+    min_items: 1
+    max_items: 4
+
+  # === Sección 6 ===
+  - id: actividad_economica_descripcion
+    descripcion: "Actividad económica productiva del beneficiario"
+    tipo: string
+
+  # === Sección 7 ===
+  - id: garantia_fag
+    descripcion: "¿Solicita garantía FAG? (si/no)"
+    tipo: string
+    valores_permitidos: ["si", "sí", "no"]
+
+campos_opcionales:
+  - id: monto_total_activos
+    tipo: number
+  - id: fecha_balance_dia
+    tipo: number
+  - id: fecha_balance_mes
+    tipo: number
+  - id: fecha_balance_anio
+    tipo: number
+  - id: tenencia_otra_cual
+    tipo: string
+  - id: modalidad_pago_capital
+    tipo: string
+  - id: modalidad_pago_intereses
+    tipo: string
+  - id: cronograma_fecha_inicial
+    tipo: string
+  - id: cronograma_fecha_final
+    tipo: string
+  - id: actividad_economica_codigo
+    tipo: string
+  - id: fag_cobertura_pct
+    tipo: number
+    rango: { min: 0, max: 100 }
+  - id: elaborado_por_nombre
+    tipo: string
+  - id: elaborado_por_cargo
+    tipo: string
+  - id: elaborado_por_fecha
+    tipo: string
+
+# Reglas cruzadas (TODO: implementar en validator)
+reglas_cruzadas:
+  - id: actividades_no_vacia
+    descripcion: "Debe haber al menos una actividad con valor > 0"
+    severidad: error
+  - id: total_credito_consistente
+    descripcion: "Suma de valor_total_credito ≤ suma de valor_total_proyecto"
+    severidad: warning
+
+# Umbral de aprobación
+umbral_aprobacion:
+  campos_requeridos_minimo: 0.85   # 85% de los requeridos
+  campos_opcionales_minimo: 0.0

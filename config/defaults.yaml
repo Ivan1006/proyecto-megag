@@ -1,0 +1,10 @@
+# Valores hardcoded del intermediario financiero.
+# Se aplican automáticamente y se sobreescriben con datos del correo si vienen.
+
+intermediario_financiero: "BANCOLOMBIA"
+oficina: "OFICINA PRINCIPAL"
+oficina_departamento: "ANTIOQUIA"
+oficina_municipio: "MEDELLÍN"
+oficina_direccion: "Carrera 48 # 26-85"
+oficina_telefono: "(604) 510 9000"
+oficina_fax: ""
