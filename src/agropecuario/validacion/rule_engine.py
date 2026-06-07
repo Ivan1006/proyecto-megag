@@ -19,6 +19,8 @@ class FieldRule:
     patron: str | None = None
     rango: dict[str, float] | None = None
     valores_permitidos: list[Any] | None = None
+    # Para campos `tipo: array`: sub-esquema de cada elemento de la lista.
+    item_fields: list[FieldRule] = field(default_factory=list)
 
 
 @dataclass
@@ -82,6 +84,10 @@ def load_rules(path: Path) -> RuleSet:
 
 
 def _field_from_dict(d: dict, required: bool) -> FieldRule:
+    # Los sub-campos de un array heredan el estado de requerido del campo padre.
+    item_fields = [
+        _field_from_dict(item, required=required) for item in d.get("item_fields", [])
+    ]
     return FieldRule(
         id=d["id"],
         descripcion=d.get("descripcion", ""),
@@ -91,4 +97,5 @@ def _field_from_dict(d: dict, required: bool) -> FieldRule:
         patron=d.get("patron"),
         rango=d.get("rango"),
         valores_permitidos=d.get("valores_permitidos"),
+        item_fields=item_fields,
     )

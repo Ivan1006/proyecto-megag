@@ -1,54 +1,83 @@
-"""Mapeador correo → campos de la plantilla usando OpenAI.
+"""Mapeador correo → campos del formulario Finagro usando OpenAI.
 
-El LLM recibe el texto combinado (cuerpo + adjuntos) y devuelve JSON con los
-campos requeridos/opcionales. La estructura exacta se define desde `rules.yaml`
-para evitar acoplar el prompt al código.
+El LLM recibe el texto combinado (cuerpo + adjuntos) y devuelve un JSON con los
+campos del formulario Bancolombia/Finagro definidos en `rules.yaml`. La estructura
+del esquema se deriva de las reglas para no acoplar el prompt al código.
+
+**Fuera de alcance — códigos**: el mapper extrae solo TEXTO y CIFRAS del correo.
+La asignación de códigos Finagro de la sección 5 (`cod_linea`, `cod_rubro`,
+`descripcion_rubro`) es responsabilidad del sub-agente `code_resolver`, que parte
+de la descripción en lenguaje natural (`actividad`/`destino`) que sí extrae este
+mapper. Ver [[Tareas pendientes]] del vault.
+
+El LLM se inyecta vía el parámetro `chat` para poder testear sin red ni API key:
+`chat(messages, model) -> str` debe devolver el contenido (idealmente JSON).
 """
 
 from __future__ import annotations
 
 import json
+from collections.abc import Callable, Sequence
 from typing import Any
 
-from langchain_core.messages import HumanMessage, SystemMessage
-from langchain_openai import ChatOpenAI
+from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from ..logging_conf import get_logger
 from ..settings import get_settings
-from ..validacion.rule_engine import RuleSet
+from ..validacion.rule_engine import FieldRule, RuleSet
 
 logger = get_logger(__name__)
 
-SYSTEM_PROMPT = """Eres un asistente que extrae datos estructurados de correos y
-adjuntos para armar proyectos agropecuarios. Devuelve SIEMPRE un JSON válido sin
-texto adicional. Si un campo no aparece, déjalo como null."""
+# `chat(messages, model)` -> texto de la respuesta. Inyectable para tests.
+ChatFn = Callable[[Sequence[BaseMessage], str], str]
+
+SYSTEM_PROMPT = (
+    "Eres un analista de crédito agropecuario que extrae datos estructurados de "
+    "correos y adjuntos para diligenciar la Solicitud de Crédito Agropecuario "
+    "Bancolombia/Finagro. Extrae únicamente lo que aparezca en el contenido; no "
+    "inventes valores. Para la tabla de actividades (sección 5) extrae la "
+    "descripción en lenguaje natural de la actividad y el destino del crédito, "
+    "junto con las cifras financieras: NO asignes códigos Finagro (eso lo hace "
+    "otro paso). Devuelve SIEMPRE un único JSON válido, sin texto adicional. Si "
+    "un campo no aparece, déjalo como null."
+)
+
+
+def _describe_field(c: FieldRule, indent: str = "") -> list[str]:
+    """Línea(s) de esquema para un campo; recursivo para arrays con item_fields."""
+    required = "REQUERIDO" if c.required else "opcional"
+    extra = []
+    if c.alias:
+        extra.append(f"alias: {', '.join(c.alias)}")
+    if c.valores_permitidos:
+        extra.append(f"valores: {c.valores_permitidos}")
+    if c.rango:
+        extra.append(f"rango: {c.rango}")
+    suffix = f" ({'; '.join(extra)})" if extra else ""
+    lines = [f"{indent}- {c.id} [{c.tipo}, {required}]: {c.descripcion}{suffix}"]
+
+    if c.tipo == "array" and c.item_fields:
+        lines.append(f"{indent}  Cada elemento es un objeto con estas claves:")
+        for sub in c.item_fields:
+            lines.extend(_describe_field(sub, indent=indent + "    "))
+    return lines
 
 
 def _build_schema_description(rules: RuleSet) -> str:
     lines = ["Campos a extraer:"]
     for c in rules.campos:
-        required = "REQUERIDO" if c.required else "opcional"
-        extra = []
-        if c.alias:
-            extra.append(f"alias: {', '.join(c.alias)}")
-        if c.valores_permitidos:
-            extra.append(f"valores: {c.valores_permitidos}")
-        if c.rango:
-            extra.append(f"rango: {c.rango}")
-        suffix = f" ({'; '.join(extra)})" if extra else ""
-        lines.append(f"- {c.id} [{c.tipo}, {required}]: {c.descripcion}{suffix}")
+        lines.extend(_describe_field(c))
     return "\n".join(lines)
 
 
-@retry(stop=stop_after_attempt(3), wait=wait_exponential(min=1, max=10))
-def map_content_to_fields(combined_text: str, rules: RuleSet) -> dict[str, Any]:
-    settings = get_settings()
-    llm = ChatOpenAI(
-        model=settings.openai_model,
-        api_key=settings.openai_api_key,
-        temperature=0,
-    ).bind(response_format={"type": "json_object"})
+def map_content_to_fields(
+    combined_text: str,
+    rules: RuleSet,
+    chat: ChatFn | None = None,
+) -> dict[str, Any]:
+    """Extrae los campos del formulario Finagro del texto combinado del correo."""
+    _chat = chat or _default_chat
 
     schema = _build_schema_description(rules)
     messages = [
@@ -57,14 +86,31 @@ def map_content_to_fields(combined_text: str, rules: RuleSet) -> dict[str, Any]:
             content=(
                 f"{schema}\n\n"
                 f"Contenido del correo y adjuntos:\n---\n{combined_text}\n---\n\n"
-                f"Devuelve un JSON con una clave por cada campo. Usa null si no está."
+                "Devuelve un JSON con una clave por cada campo (usa null si no "
+                "está). El campo `actividades` debe ser una lista de objetos con "
+                "las claves indicadas en su esquema."
             )
         ),
     ]
-    response = llm.invoke(messages)
-    content = response.content if isinstance(response.content, str) else str(response.content)
+    raw = _chat(messages, get_settings().openai_model)
     try:
-        return json.loads(content)
-    except json.JSONDecodeError:
-        logger.warning("mapper.json_invalid", raw=content[:500])
+        data = json.loads(raw)
+        return data if isinstance(data, dict) else {}
+    except (json.JSONDecodeError, TypeError):
+        logger.warning("mapper.json_invalido", raw=str(raw)[:500])
         return {}
+
+
+@retry(stop=stop_after_attempt(3), wait=wait_exponential(min=1, max=10))
+def _default_chat(messages: Sequence[BaseMessage], model: str) -> str:
+    """Implementación real contra OpenAI; se construye perezosamente."""
+    from langchain_openai import ChatOpenAI
+
+    settings = get_settings()
+    llm = ChatOpenAI(
+        model=model,
+        api_key=settings.openai_api_key,
+        temperature=0,
+    ).bind(response_format={"type": "json_object"})
+    response = llm.invoke(list(messages))
+    return response.content if isinstance(response.content, str) else str(response.content)
