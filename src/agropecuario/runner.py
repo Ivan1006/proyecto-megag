@@ -15,7 +15,6 @@ Pasos:
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from typing import Any
 
@@ -144,19 +143,13 @@ def process_thread(
 
 
 def _render_outputs(fields: dict[str, Any], thread_id: str) -> dict[str, Path]:
-    """Aplica defaults + renderiza Excel + PDF."""
-    import yaml
-
+    """Consolida campos (defaults + códigos sec. 5 + cronograma) y renderiza Excel + PDF."""
+    from .generacion.enricher import enrich_fields
     from .generacion.excel_writer import render_excel
     from .generacion.pdf_writer import render_pdf
 
     settings = get_settings()
-    defaults_path = Path("./config/defaults.yaml")
-    if defaults_path.exists():
-        defaults = yaml.safe_load(defaults_path.read_text(encoding="utf-8")) or {}
-        merged = {**defaults, **fields}
-    else:
-        merged = fields
+    merged = enrich_fields(fields)
 
     out_dir = settings.output_dir / thread_id
     out_dir.mkdir(parents=True, exist_ok=True)

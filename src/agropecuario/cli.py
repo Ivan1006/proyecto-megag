@@ -38,8 +38,8 @@ def auth() -> None:
 @app.command()
 def run(message_id: str = typer.Option(..., "--message-id", "-m"),
         no_drive: bool = typer.Option(False, help="No subir a Drive")) -> None:
-    """Procesa un correo específico por ID."""
-    from .orchestrator import run_for_message  # lazy: usa el flujo legacy
+    """Procesa un correo específico por ID (grafo LangGraph end-to-end Finagro)."""
+    from .orchestrator import run_for_message
     result = run_for_message(message_id, enable_drive=not no_drive)
     console.print(f"[bold]Estado final:[/bold] {result.get('status')}")
     outputs = result.get("outputs")
@@ -51,7 +51,7 @@ def run(message_id: str = typer.Option(..., "--message-id", "-m"),
 @app.command()
 def watch(interval: int = typer.Option(60, help="Segundos entre polls")) -> None:
     """Modo continuo: consulta Gmail periódicamente."""
-    from .orchestrator import run_for_message  # lazy: usa el flujo legacy
+    from .orchestrator import run_for_message
     gmail = GmailClient()
     gmail.authenticate(interactive=False)
     seen: set[str] = set()

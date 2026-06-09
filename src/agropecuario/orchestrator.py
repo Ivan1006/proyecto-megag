@@ -17,7 +17,6 @@ from .agents.validacion import (
     make_validar_node,
     route_after_validation,
 )
-from .generacion.template_engine import load_template
 from .ingesta.gmail_client import GmailClient
 from .settings import get_settings
 from .storage.drive_client import DriveClient
@@ -29,14 +28,13 @@ def build_graph(enable_drive: bool = True):
     settings.ensure_dirs()
 
     rules = load_rules(settings.rules_path)
-    template = load_template(settings.template_path)
     gmail = GmailClient()
     drive = DriveClient(gmail=gmail) if enable_drive and settings.drive_output_folder_id else None
 
     graph: StateGraph = StateGraph(GraphState)
     graph.add_node("ingesta", make_ingesta_node(gmail, rules))
     graph.add_node("validar", make_validar_node(rules))
-    graph.add_node("generar", make_generacion_node(template, drive))
+    graph.add_node("generar", make_generacion_node(drive))
     graph.add_node("notificar", make_notificar_node(gmail))
 
     graph.add_edge(START, "ingesta")
