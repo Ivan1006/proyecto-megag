@@ -79,11 +79,41 @@ campos_requeridos:
     tipo: string
 
   # === Sección 5: tabla de actividades ===
+  # El mapper extrae por actividad la descripción en lenguaje natural
+  # (`actividad`/`destino`, insumo del code_resolver) y las cifras financieras.
+  # Los CÓDIGOS (cod_linea, cod_rubro, descripcion_rubro) NO los extrae el
+  # mapper: los infiere el sub-agente code_resolver a partir de `actividad`/
+  # `destino`. No agregarlos aquí.
   - id: actividades
     descripcion: "Lista de actividades a financiar (mínimo 1)"
     tipo: array
     min_items: 1
     max_items: 4
+    item_fields:
+      - id: actividad
+        descripcion: "Actividad económica/productiva en lenguaje natural (p. ej. 'cultivo de café', 'engorde de novillos')"
+        tipo: string
+      - id: destino
+        descripcion: "Uso específico del crédito en lenguaje natural (p. ej. 'renovación de cafetales', 'compra de insumos')"
+        tipo: string
+      - id: unidades_hectareas
+        descripcion: "Unidades o hectáreas de la actividad"
+        tipo: number
+      - id: valor_total_proyecto
+        descripcion: "Valor total del proyecto para esta actividad (en miles de pesos, igual que el formulario)"
+        tipo: number
+      - id: valor_total_credito
+        descripcion: "Valor total del crédito solicitado para esta actividad (en miles de pesos)"
+        tipo: number
+      - id: plazo_meses
+        descripcion: "Plazo del crédito en meses"
+        tipo: number
+      - id: periodo_gracia_meses
+        descripcion: "Período de gracia en meses"
+        tipo: number
+      - id: puntos_dtf
+        descripcion: "Puntos adicionales sobre DTF (tasa)"
+        tipo: number
 
   # === Sección 6 ===
   - id: actividad_economica_descripcion
