@@ -175,3 +175,15 @@ Cuando documente decisiones, avances, ideas o aprendizajes:
 - Diagramas en bloques ```mermaid (Obsidian los renderiza nativo).
 - Si una nota crece demasiado, **dividirla** antes de que mezcle temas — no
   reincorporar contenido a este `CLAUDE.md`.
+
+## Herramientas ECC (asistencia, opcional)
+
+En `.claude/` hay agentes y comandos de ECC instalados (perfil `minimal`, sin
+hooks: nada se ejecuta solo, no compiten con las rutinas del vault). Úsalos bajo
+demanda; no son obligatorios para ninguna tarea.
+
+- Agentes útiles aquí: `python-reviewer`, `fastapi-reviewer` (dashboard),
+  `security-reviewer` (sobre todo lo que toque `secrets/`, Gmail o Drive),
+  `database-reviewer` (SQLite), `code-reviewer`, `silent-failure-hunter`.
+- Comandos: `/plan`, `/code-review`, `/python-review`, `/fastapi-review`,
+  `/security-scan`, `/test-coverage`, `/refactor-clean`, `/build-fix`.

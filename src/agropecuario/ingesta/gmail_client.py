@@ -8,6 +8,7 @@ from email.utils import parseaddr
 from pathlib import Path
 from typing import Iterable
 
+from google.auth.exceptions import RefreshError
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -37,15 +38,24 @@ class GmailClient:
         if token.exists():
             creds = Credentials.from_authorized_user_file(str(token), SCOPES)
         if not creds or not creds.valid:
+            refreshed = False
             if creds and creds.expired and creds.refresh_token:
-                creds.refresh(Request())
-            elif interactive:
-                flow = InstalledAppFlow.from_client_secrets_file(
-                    str(self.settings.google_client_secrets), SCOPES
-                )
-                creds = flow.run_local_server(port=0)
-            else:
-                raise RuntimeError("No hay credenciales válidas y modo no-interactivo")
+                try:
+                    creds.refresh(Request())
+                    refreshed = True
+                except RefreshError as e:
+                    # El refresh token caducó (típico en modo Testing de Google,
+                    # 7 días). Descartamos el token muerto y caemos al login.
+                    logger.warning("gmail.refresh_failed", error=str(e))
+                    creds = None
+            if not refreshed:
+                if interactive:
+                    flow = InstalledAppFlow.from_client_secrets_file(
+                        str(self.settings.google_client_secrets), SCOPES
+                    )
+                    creds = flow.run_local_server(port=0)
+                else:
+                    raise RuntimeError("No hay credenciales válidas y modo no-interactivo")
             token.parent.mkdir(parents=True, exist_ok=True)
             token.write_text(creds.to_json())
         self._service = build("gmail", "v1", credentials=creds)

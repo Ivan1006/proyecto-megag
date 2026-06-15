@@ -88,6 +88,7 @@ def process_thread(
         extracted = extract(virtual)
 
         fields: dict[str, Any] = {}
+        aprobado = True
         if use_llm and settings.openai_api_key:
             from .generacion.mapper import map_content_to_fields
             from .validacion.rule_engine import load_rules
@@ -119,21 +120,23 @@ def process_thread(
                     for g in result.gaps
                 ],
             )
-            if not result.aprobado:
+            aprobado = result.aprobado
+            if not aprobado:
                 db.update_run(run_id, status="incomplete")
-                _finish_and_tag(gmail, thread_id, run_id, "incomplete", mark_done)
-                return run_id
 
+        # Genera el Excel + PDF aunque el formulario esté incompleto: se rellenan
+        # con los datos disponibles (las celdas sin dato quedan en blanco). El
+        # estado final sigue reflejando la incompletitud.
         if render and fields:
             paths = _render_outputs(fields, thread_id)
             db.update_run(
                 run_id,
                 excel_path=str(paths["excel"]),
                 pdf_path=str(paths["pdf"]) if paths.get("pdf") else None,
-                status="generated",
             )
 
-        _finish_and_tag(gmail, thread_id, run_id, "generated" if fields else "extracted", mark_done)
+        final_status = "incomplete" if not aprobado else ("generated" if fields else "extracted")
+        _finish_and_tag(gmail, thread_id, run_id, final_status, mark_done)
         return run_id
 
     except Exception as e:  # noqa: BLE001
