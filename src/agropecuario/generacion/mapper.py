@@ -35,7 +35,7 @@ ChatFn = Callable[[Sequence[BaseMessage], str], str]
 SYSTEM_PROMPT = (
     "Eres un analista de crédito agropecuario que extrae datos estructurados de "
     "correos y adjuntos para diligenciar la Solicitud de Crédito Agropecuario "
-    "Bancolombia/Finagro. Extrae únicamente lo que aparezca en el contenido; no "
+    "Finagro. Extrae únicamente lo que aparezca en el contenido; no "
     "inventes valores. Para la tabla de actividades (sección 5) extrae la "
     "descripción en lenguaje natural de la actividad y el destino del crédito, "
     "junto con las cifras financieras: NO asignes códigos Finagro (eso lo hace "
