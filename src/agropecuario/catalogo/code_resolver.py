@@ -30,8 +30,13 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 from ..logging_conf import get_logger
 from ..settings import get_settings
 from .loader import Catalogo, CatalogoEntry, get_catalogo
+from .manual_retriever import ManualRetriever, get_retriever
 
 logger = get_logger(__name__)
+
+# Cuántos fragmentos del Manual de Servicios se inyectan como contexto al elegir
+# el destino. Editable si los prompts crecen demasiado.
+MANUAL_TOP_K = 5
 
 # `chat(messages, model)` -> texto de la respuesta. Inyectable para tests.
 ChatFn = Callable[[Sequence[BaseMessage], str], str]
@@ -87,10 +92,12 @@ class CodeResolver:
         catalogo: Catalogo | None = None,
         chat: ChatFn | None = None,
         line_codes: dict[str, int] | None = None,
+        retriever: ManualRetriever | None = None,
     ) -> None:
         self.catalogo = catalogo or get_catalogo()
         self._chat = chat or _default_chat
         self.line_codes = line_codes or LINEAS_CREDITO_CODIGO
+        self.retriever = retriever or get_retriever()
 
     # --- API pública -------------------------------------------------------
 
@@ -142,12 +149,20 @@ class CodeResolver:
         self, query: str, subset: list[CatalogoEntry]
     ) -> tuple[CatalogoEntry, str]:
         catalogo_txt = "\n".join(f"{i}. {e.resumen()}" for i, e in enumerate(subset))
+        contexto = self._manual_contexto(query)
+        bloque_manual = (
+            f"Contexto del Manual de Servicios Finagro (úsalo para entender qué "
+            f"financia cada destino):\n{contexto}\n\n"
+            if contexto
+            else ""
+        )
         messages = [
             SystemMessage(content=_SYSTEM),
             HumanMessage(
                 content=(
                     "Paso 2 de 2 — elige el destino de crédito que mejor encaja.\n\n"
                     f"Actividad del cliente:\n{query}\n\n"
+                    f"{bloque_manual}"
                     f"Destinos candidatos:\n{catalogo_txt}\n\n"
                     "Elige el índice del destino más específico y correcto. Indica "
                     'tu confianza ("alta", "media" o "baja").\n'
@@ -166,6 +181,16 @@ class CodeResolver:
         return subset[0], "baja"
 
     # --- helpers -----------------------------------------------------------
+
+    def _manual_contexto(self, query: str) -> str:
+        """Fragmentos del manual relevantes; "" si no está indexado (con aviso)."""
+        if not self.retriever.available:
+            logger.warning(
+                "code_resolver.manual_no_indexado",
+                hint="Ejecuta `agropecuario manual-index` para cargar el manual.",
+            )
+            return ""
+        return self.retriever.contexto(query, k=MANUAL_TOP_K)
 
     def _build_result(
         self, entry: CatalogoEntry, categoria: str, confianza: str

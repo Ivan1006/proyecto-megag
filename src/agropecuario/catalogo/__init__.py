@@ -7,6 +7,8 @@ formulario a partir de la actividad/destino descritos en el correo.
 
 from .code_resolver import CodeResolver, ResolverResult
 from .loader import Catalogo, CatalogoEntry, load_catalogo
+from .manual_index import ManualChunk, build_index
+from .manual_retriever import ManualRetriever, get_retriever
 
 __all__ = [
     "Catalogo",
@@ -14,4 +16,8 @@ __all__ = [
     "load_catalogo",
     "CodeResolver",
     "ResolverResult",
+    "ManualChunk",
+    "build_index",
+    "ManualRetriever",
+    "get_retriever",
 ]

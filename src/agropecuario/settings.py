@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     openai_api_key: str = Field(default="", alias="OPENAI_API_KEY")
     openai_model: str = Field(default="gpt-4o", alias="OPENAI_MODEL")
     openai_model_mini: str = Field(default="gpt-4o-mini", alias="OPENAI_MODEL_MINI")
+    embedding_model: str = Field(
+        default="text-embedding-3-small", alias="EMBEDDING_MODEL"
+    )
 
     # Google
     google_client_secrets: Path = Field(
@@ -56,6 +59,14 @@ class Settings(BaseSettings):
     # Rutas de config
     rules_path: Path = Field(default=Path("./config/rules.yaml"), alias="RULES_PATH")
     template_path: Path = Field(default=Path("./config/template.yaml"), alias="TEMPLATE_PATH")
+
+    # Manual de servicios Finagro (RAG): PDF fuente + índice vectorial construido.
+    manual_pdf_path: Path = Field(
+        default=Path("./config/manual_servicios.pdf"), alias="MANUAL_PDF_PATH"
+    )
+    manual_index_dir: Path = Field(
+        default=Path("./config/manual_index"), alias="MANUAL_INDEX_DIR"
+    )
 
     def ensure_dirs(self) -> None:
         for p in (self.temp_dir, self.output_dir, self.db_path.parent):

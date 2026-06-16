@@ -385,5 +385,39 @@ def seed_demo() -> None:
     console.print("[green]Datos demo cargados.[/green]")
 
 
+@app.command("manual-index")
+def manual_index_cmd(
+    pdf: Path = typer.Option(None, "--pdf", help="Ruta al PDF del manual (override)"),
+    rebuild: bool = typer.Option(False, "--rebuild", help="Reconstruir aunque exista"),
+) -> None:
+    """Indexa el Manual de Servicios Finagro (RAG) que usa el code_resolver."""
+    from .catalogo.manual_index import build_index
+    from .catalogo.manual_retriever import ManualRetriever
+
+    settings = get_settings()
+    pdf_path = pdf or settings.manual_pdf_path
+
+    if not rebuild and ManualRetriever().available:
+        console.print(
+            f"[yellow]El índice ya existe en {settings.manual_index_dir}. "
+            "Usa --rebuild para reconstruirlo.[/yellow]"
+        )
+        return
+
+    if not pdf_path.exists():
+        console.print(
+            f"[red]Manual no encontrado en {pdf_path}.[/red]\n"
+            "Coloca el PDF ahí o pásalo con --pdf <ruta>."
+        )
+        raise typer.Exit(code=1)
+
+    console.print(f"Indexando {pdf_path} … (esto llama a la API de embeddings)")
+    meta = build_index(pdf_path=pdf_path)
+    console.print(
+        f"[green]Manual indexado:[/green] {meta['count']} fragmentos, "
+        f"modelo {meta['model']}, dim {meta['dim']} → {settings.manual_index_dir}"
+    )
+
+
 if __name__ == "__main__":
     app()
