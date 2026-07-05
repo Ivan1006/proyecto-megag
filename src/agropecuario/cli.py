@@ -188,20 +188,14 @@ def fill_template(
 
     Sirve para verificar el flujo de generación sin pasar por Gmail/LLM.
     """
-    import yaml as _yaml
-
+    from .generacion.enricher import enrich_fields
     from .generacion.excel_writer import render_excel
     from .generacion.pdf_writer import render_pdf
 
     payload = json.loads(data.read_text(encoding="utf-8"))
-
-    defaults_path = Path("./config/defaults.yaml")
-    if defaults_path.exists():
-        defaults = _yaml.safe_load(defaults_path.read_text(encoding="utf-8")) or {}
-        # los datos del payload tienen prioridad sobre los defaults
-        merged = {**defaults, **payload}
-    else:
-        merged = payload
+    # Mismo consolidado que el flujo real: defaults + códigos de la sección 5 +
+    # código de la sección 6 + cronograma. Así este smoke test refleja producción.
+    merged = enrich_fields(payload)
 
     output_dir.mkdir(parents=True, exist_ok=True)
     excel_out = output_dir / f"{data.stem}.xlsx"

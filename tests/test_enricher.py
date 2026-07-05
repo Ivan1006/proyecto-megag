@@ -17,6 +17,19 @@ from agropecuario.generacion.enricher import (
 FECHA = date(2026, 6, 9)
 
 
+def test_actividad_economica_codigo_deriva_del_cod_rubro():
+    """Sección 6: el código productivo = cod_rubro de la actividad principal."""
+    fields = {"actividades": [{"cod_rubro": 245100, "actividad": "porcinos"}]}
+    out = enrich_fields(fields, defaults={}, today=FECHA)
+    assert out["actividad_economica_codigo"] == "245100"
+
+
+def test_actividad_economica_codigo_ausente_si_no_hay_codigo():
+    # Sin descripción ni código: el resolver no se invoca y el campo no se fija.
+    out = enrich_fields({"actividades": [{"unidades_hectareas": 5}]}, defaults={}, today=FECHA)
+    assert "actividad_economica_codigo" not in out
+
+
 class _StubResolver:
     """Resolver fake: devuelve códigos fijos y cuenta las llamadas."""
 

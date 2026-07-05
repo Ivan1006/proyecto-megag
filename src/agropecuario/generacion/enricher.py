@@ -64,6 +64,7 @@ def enrich_fields(
     beneficiario = merged.get("beneficiario_razon_social")
     merged["actividades"] = _resolve_codes(actividades, resolver, contexto_web, beneficiario)
 
+    _set_actividad_economica_codigo(merged)
     _ensure_cronograma(merged, today or date.today())
 
     for detalle in validate_sumas(merged["actividades"]):
@@ -129,6 +130,22 @@ def _resolve_codes(
                 )
         out.append(act)
     return out
+
+
+# --- sección 6: código de la actividad económica productiva ----------------
+
+def _set_actividad_economica_codigo(fields: dict[str, Any]) -> None:
+    """Deriva el código de la sección 6 del `cod_rubro` de la actividad principal.
+
+    El formulario muestra ese código separado por dígito (N57:S57). Es el MISMO
+    código Finagro de la sección 5 (la primera actividad con `cod_rubro`), así que
+    se deriva aquí en vez de extraerse o teclearse aparte.
+    """
+    for act in fields.get("actividades") or []:
+        cod = act.get("cod_rubro")
+        if cod:
+            fields["actividad_economica_codigo"] = str(cod)
+            return
 
 
 # --- cronograma de inversión ----------------------------------------------
