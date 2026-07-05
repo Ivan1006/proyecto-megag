@@ -1,7 +1,7 @@
-"""Tests de la investigación web (lookup Tavily + comparador + cableado).
+"""Tests de la investigación web (lookup + comparador + justificación + cableado).
 
-No tocan red ni API key: la búsqueda web y el LLM se inyectan con stubs
-deterministas.
+No tocan red ni API key: la búsqueda web (OpenAI web search) y el LLM se inyectan
+con stubs deterministas.
 """
 
 from __future__ import annotations
@@ -23,53 +23,35 @@ from agropecuario.storage import db
 # --- web_lookup -----------------------------------------------------------
 
 
-def _fake_tavily(_query: str) -> dict[str, Any]:
+def _fake_search(_razon: str) -> dict[str, Any]:
     return {
-        "answer": "PORCICOLA APA S.A.S. se dedica a la cría y engorde de cerdos.",
-        "results": [
-            {"url": "https://apa.example/quienes-somos", "content": "cría de cerdos"},
-            {"url": "https://directorio.example/apa", "content": "porcicultura"},
-        ],
+        "resumen": "PORCICOLA APA S.A.S. se dedica a la cría y engorde de cerdos.",
+        "fuentes": ["https://apa.example/quienes-somos", "https://directorio.example/apa"],
     }
 
 
-def test_lookup_company_arma_findings_desde_tavily():
-    findings = lookup_company("PORCICOLA APA S.A.S.", search=_fake_tavily)
+def test_lookup_company_arma_findings():
+    findings = lookup_company("PORCICOLA APA S.A.S.", search=_fake_search)
     assert findings.found
     assert "cerdos" in findings.resumen.lower()
     assert findings.fuentes == [
         "https://apa.example/quienes-somos",
         "https://directorio.example/apa",
     ]
-
-
-def test_lookup_company_extrae_contenido_del_sitio():
-    def search(_q: str) -> dict[str, Any]:
-        return {
-            "answer": "cría de cerdos",
-            "results": [
-                {
-                    "url": "https://apa.example",
-                    "content": "porcicultura",
-                    "raw_content": "APA S.A.S. se dedica a la cría y engorde de cerdos.",
-                }
-            ],
-        }
-
-    findings = lookup_company("PORCICOLA APA", search=search)
-    assert findings.sitio_oficial == "https://apa.example"
-    assert "engorde de cerdos" in findings.contenido_web
+    # El resumen sirve de contenido para la justificación; sitio = primera fuente.
+    assert findings.contenido_web == findings.resumen
+    assert findings.sitio_oficial == "https://apa.example/quienes-somos"
 
 
 def test_lookup_company_sin_razon_no_busca():
-    findings = lookup_company("   ", search=_fake_tavily)
+    findings = lookup_company("   ", search=_fake_search)
     assert not findings.found
     assert findings.fuentes == []
 
 
 def test_lookup_company_search_falla_degrada():
-    def boom(_query: str) -> dict[str, Any]:
-        raise RuntimeError("Tavily 500")
+    def boom(_razon: str) -> dict[str, Any]:
+        raise RuntimeError("OpenAI 500")
 
     findings = lookup_company("ACME S.A.", search=boom)
     assert not findings.found
@@ -77,7 +59,7 @@ def test_lookup_company_search_falla_degrada():
 
 
 def test_lookup_company_sin_resultados_found_false():
-    findings = lookup_company("ACME S.A.", search=lambda _q: {"answer": "", "results": []})
+    findings = lookup_company("ACME S.A.", search=lambda _r: {"resumen": "", "fuentes": []})
     assert not findings.found
 
 
@@ -286,7 +268,7 @@ def test_investigar_web_guarda_flag_y_devuelve_contexto(monkeypatch):
 
     class _S:
         web_lookup_enabled = True
-        tavily_api_key = "k"
+        openai_api_key = "k"
 
     monkeypatch.setattr(runner, "get_settings", lambda: _S())
 
@@ -310,7 +292,7 @@ def test_investigar_web_desactivado_sin_llave(monkeypatch):
 
     class _S:
         web_lookup_enabled = True
-        tavily_api_key = ""  # sin llave → degrada
+        openai_api_key = ""  # sin llave → degrada
 
     monkeypatch.setattr(runner, "get_settings", lambda: _S())
     assert runner._investigar_web(1, {"beneficiario_razon_social": "X"}) is None
