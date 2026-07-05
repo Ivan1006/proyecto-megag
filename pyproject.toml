@@ -31,8 +31,6 @@ dependencies = [
     "xlsxwriter>=3.2",
     # RAG del Manual de Servicios (índice vectorial en memoria)
     "numpy>=1.26",
-    # Investigación web de la razón social (apoyo al code_resolver)
-    "tavily-python>=0.5",
     # Utilidades
     "typer>=0.12",
     "rich>=13.7",

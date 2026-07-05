@@ -28,10 +28,10 @@ class Settings(BaseSettings):
         default="text-embedding-3-small", alias="EMBEDDING_MODEL"
     )
 
-    # Investigación web (Tavily) para apoyar al code_resolver con la razón social.
-    # Si falta la llave, el lookup degrada (se desactiva) sin romper el flujo.
-    tavily_api_key: str = Field(default="", alias="TAVILY_API_KEY")
+    # Investigación web con la búsqueda nativa de OpenAI (web search). Usa la misma
+    # OPENAI_API_KEY; si falta o falla, el lookup degrada sin romper el flujo.
     web_lookup_enabled: bool = Field(default=True, alias="WEB_LOOKUP_ENABLED")
+    web_search_model: str = Field(default="gpt-4o", alias="WEB_SEARCH_MODEL")
 
     # Google
     google_client_secrets: Path = Field(

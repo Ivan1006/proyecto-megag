@@ -162,7 +162,7 @@ def _investigar_web(run_id: int, fields: dict[str, Any]):
     justificación.
     """
     settings = get_settings()
-    if not (settings.web_lookup_enabled and settings.tavily_api_key):
+    if not (settings.web_lookup_enabled and settings.openai_api_key):
         return None
     razon = fields.get("beneficiario_razon_social")
     if not razon:
