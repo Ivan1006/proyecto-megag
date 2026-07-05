@@ -153,27 +153,47 @@ class CodeResolver:
         # (b) Hay candidatos por palabra clave → el LLM desempata SOLO entre ellos.
         if matches:
             shortlist = [m.entry for m in matches[:MAX_SHORTLIST]]
-            entry, confianza = self._pick_destino(query_llm, shortlist, contexto_web)
+            entry, confianza = self._pick_destino(
+                query_llm, shortlist, contexto_web, beneficiario
+            )
             return self._build_result(entry, entry.categoria_macro, confianza, metodo="llm")
 
         # (c) Sin candidatos → 2 pasos LLM sobre el catálogo resoluble.
-        return self._resolve_llm_2pasos(query_llm, resolubles, contexto_web)
+        return self._resolve_llm_2pasos(query_llm, resolubles, contexto_web, beneficiario)
 
     # --- pasos LLM ---------------------------------------------------------
 
     def _resolve_llm_2pasos(
-        self, query: str, resolubles: list[CatalogoEntry], contexto_web: str | None
+        self,
+        query: str,
+        resolubles: list[CatalogoEntry],
+        contexto_web: str | None,
+        beneficiario: str | None = None,
     ) -> ResolverResult:
         """Fallback: acota por categoría macro y elige destino, ambos vía LLM."""
-        categoria = self._pick_categoria(query, resolubles)
+        categoria = self._pick_categoria(query, resolubles, beneficiario)
         subset = [e for e in resolubles if e.categoria_macro == categoria]
         if not subset:
             logger.warning("code_resolver.categoria_vacia", categoria=categoria)
             subset = resolubles  # fallback: todo el catálogo resoluble
-        entry, confianza = self._pick_destino(query, subset, contexto_web)
+        entry, confianza = self._pick_destino(query, subset, contexto_web, beneficiario)
         return self._build_result(entry, entry.categoria_macro, confianza, metodo="fallback")
 
-    def _pick_categoria(self, query: str, entries: list[CatalogoEntry]) -> str:
+    def _bloque_cliente(self, beneficiario: str | None) -> str:
+        """Razón social como indicio FUERTE del giro real (clave si el correo es pobre)."""
+        if not beneficiario:
+            return ""
+        return (
+            f"Razón social del cliente: {beneficiario}\n"
+            "El nombre del cliente suele delatar su actividad real (p. ej. "
+            "'PORCICULTORES ...' → porcinos, 'AVÍCOLA ...' → aves). Priorízalo por "
+            "encima de palabras genéricas de la operación de crédito como "
+            "'renovación', 'cartera' o 'sustitutiva', que NO indican el rubro.\n\n"
+        )
+
+    def _pick_categoria(
+        self, query: str, entries: list[CatalogoEntry], beneficiario: str | None = None
+    ) -> str:
         categorias: list[str] = []
         for e in entries:
             if e.categoria_macro not in categorias:
@@ -187,7 +207,8 @@ class CodeResolver:
             HumanMessage(
                 content=(
                     "Paso 1 de 2 — clasifica la actividad en UNA categoría macro.\n\n"
-                    f"Actividad del cliente:\n{query}\n\n"
+                    f"{self._bloque_cliente(beneficiario)}"
+                    f"Actividad del cliente (según el correo):\n{query}\n\n"
                     f"Categorías disponibles:\n{opciones}\n\n"
                     'Responde JSON: {"indice": <número de la categoría>}'
                 )
@@ -201,7 +222,11 @@ class CodeResolver:
         return categorias[0]
 
     def _pick_destino(
-        self, query: str, subset: list[CatalogoEntry], contexto_web: str | None = None
+        self,
+        query: str,
+        subset: list[CatalogoEntry],
+        contexto_web: str | None = None,
+        beneficiario: str | None = None,
     ) -> tuple[CatalogoEntry, str]:
         catalogo_txt = "\n".join(f"{i}. {e.resumen()}" for i, e in enumerate(subset))
         contexto = self._manual_contexto(query)
@@ -222,12 +247,14 @@ class CodeResolver:
             HumanMessage(
                 content=(
                     "Paso 2 de 2 — elige el destino de crédito que mejor encaja.\n\n"
-                    f"Actividad del cliente:\n{query}\n\n"
+                    f"{self._bloque_cliente(beneficiario)}"
+                    f"Actividad del cliente (según el correo):\n{query}\n\n"
                     f"{bloque_manual}"
                     f"{bloque_web}"
                     f"Destinos candidatos:\n{catalogo_txt}\n\n"
-                    "Elige el índice del destino más específico y correcto. Indica "
-                    'tu confianza ("alta", "media" o "baja").\n'
+                    "Elige el índice del destino más específico y correcto, coherente "
+                    "con la actividad real del cliente. Indica tu confianza "
+                    '("alta", "media" o "baja").\n'
                     'Responde JSON: {"indice": <número>, "confianza": "<nivel>"}'
                 )
             ),
