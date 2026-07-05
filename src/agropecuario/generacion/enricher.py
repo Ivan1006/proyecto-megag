@@ -47,18 +47,21 @@ def enrich_fields(
     resolver: CodeResolver | None = None,
     today: date | None = None,
     defaults: dict[str, Any] | None = None,
+    contexto_web: str | None = None,
 ) -> dict[str, Any]:
     """Devuelve una copia consolidada de `fields` lista para `render_excel`.
 
     No muta el dict de entrada. `defaults=None` carga `config/defaults.yaml`;
     pasa `defaults={}` para omitirlos. `resolver`/`today` son inyectables.
+    `contexto_web` es un resumen (opcional) de la actividad de la empresa según
+    una búsqueda web; se pasa al `code_resolver` como apoyo (el correo manda).
     """
     if defaults is None:
         defaults = load_defaults()
     merged: dict[str, Any] = {**defaults, **fields}
 
     actividades = merged.get("actividades") or []
-    merged["actividades"] = _resolve_codes(actividades, resolver)
+    merged["actividades"] = _resolve_codes(actividades, resolver, contexto_web)
 
     _ensure_cronograma(merged, today or date.today())
 
@@ -78,7 +81,9 @@ def load_defaults() -> dict[str, Any]:
 # --- sección 5: resolución de códigos -------------------------------------
 
 def _resolve_codes(
-    actividades: list[dict[str, Any]], resolver: CodeResolver | None
+    actividades: list[dict[str, Any]],
+    resolver: CodeResolver | None,
+    contexto_web: str | None = None,
 ) -> list[dict[str, Any]]:
     """Completa los códigos Finagro de cada fila que no los traiga.
 
@@ -101,7 +106,9 @@ def _resolve_codes(
                     out.append(act)
                     continue
             try:
-                res = _resolver.resolve(str(descripcion), act.get("destino"))
+                res = _resolver.resolve(
+                    str(descripcion), act.get("destino"), contexto_web=contexto_web
+                )
                 for key, value in res.to_actividad().items():
                     if value is not None:
                         act[key] = value

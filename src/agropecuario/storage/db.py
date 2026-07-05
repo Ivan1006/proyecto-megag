@@ -49,6 +49,9 @@ CREATE TABLE IF NOT EXISTS runs (
     drive_pdf_url     TEXT,
     error             TEXT,
     closed            INTEGER NOT NULL DEFAULT 0,  -- marcado como cerrado por el analista
+    discrepancia_correo_web INTEGER,               -- 0|1|null: actividad correo vs web
+    web_actividad_resumen   TEXT,                  -- resumen de la actividad según la web
+    web_fuentes_json        TEXT,                  -- JSON: URLs consultadas
     UNIQUE(thread_id, last_message_id)
 );
 
@@ -99,10 +102,29 @@ def connection(db_path: Path | None = None) -> Iterator[sqlite3.Connection]:
         conn.close()
 
 
+# Columnas añadidas después del esquema inicial. Se aplican con ALTER TABLE
+# idempotente sobre bases existentes (para nuevas ya vienen en SCHEMA).
+_RUNS_EXTRA_COLUMNS: dict[str, str] = {
+    "discrepancia_correo_web": "INTEGER",
+    "web_actividad_resumen": "TEXT",
+    "web_fuentes_json": "TEXT",
+}
+
+
 def init_db(db_path: Path | None = None) -> None:
     with connection(db_path) as conn:
         conn.executescript(SCHEMA)
+        ensure_columns(conn)
     logger.info("db.initialized", path=str(db_path or get_settings().db_path))
+
+
+def ensure_columns(conn: sqlite3.Connection) -> None:
+    """Añade columnas nuevas a `runs` que falten (migración sin destruir datos)."""
+    existing = {r["name"] for r in conn.execute("PRAGMA table_info(runs)")}
+    for col, decl in _RUNS_EXTRA_COLUMNS.items():
+        if col not in existing:
+            conn.execute(f"ALTER TABLE runs ADD COLUMN {col} {decl}")
+            logger.info("db.column_added", column=col)
 
 
 # ---------------------------------------------------------------------------

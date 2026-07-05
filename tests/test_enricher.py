@@ -23,7 +23,9 @@ class _StubResolver:
     def __init__(self) -> None:
         self.calls = 0
 
-    def resolve(self, actividad: str, destino: str | None = None) -> ResolverResult:
+    def resolve(
+        self, actividad: str, destino: str | None = None, contexto_web: str | None = None
+    ) -> ResolverResult:
         self.calls += 1
         return ResolverResult(
             cod_linea=2,
@@ -37,7 +39,9 @@ class _StubResolver:
 class _BoomResolver:
     """Resolver que estalla si lo llaman (para verificar que NO se invoca)."""
 
-    def resolve(self, actividad: str, destino: str | None = None) -> ResolverResult:
+    def resolve(
+        self, actividad: str, destino: str | None = None, contexto_web: str | None = None
+    ) -> ResolverResult:
         raise AssertionError("el resolver no debería invocarse")
 
 
