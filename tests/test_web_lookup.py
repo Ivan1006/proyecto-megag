@@ -16,6 +16,7 @@ from agropecuario.catalogo.code_resolver import CodeResolver
 from agropecuario.catalogo.loader import Catalogo, CatalogoEntry
 from agropecuario.generacion.enricher import enrich_fields
 from agropecuario.investigacion.comparador import MismatchResult, compare_actividades
+from agropecuario.investigacion.justificacion import generar_justificacion
 from agropecuario.investigacion.web_lookup import WebFindings, lookup_company
 from agropecuario.storage import db
 
@@ -40,6 +41,24 @@ def test_lookup_company_arma_findings_desde_tavily():
         "https://apa.example/quienes-somos",
         "https://directorio.example/apa",
     ]
+
+
+def test_lookup_company_extrae_contenido_del_sitio():
+    def search(_q: str) -> dict[str, Any]:
+        return {
+            "answer": "cría de cerdos",
+            "results": [
+                {
+                    "url": "https://apa.example",
+                    "content": "porcicultura",
+                    "raw_content": "APA S.A.S. se dedica a la cría y engorde de cerdos.",
+                }
+            ],
+        }
+
+    findings = lookup_company("PORCICOLA APA", search=search)
+    assert findings.sitio_oficial == "https://apa.example"
+    assert "engorde de cerdos" in findings.contenido_web
 
 
 def test_lookup_company_sin_razon_no_busca():
@@ -91,6 +110,72 @@ def test_comparador_sin_actividad_correo_usa_web_como_apoyo():
     result = compare_actividades("", web, chat=_chat_discrepa)
     assert not result.discrepancia
     assert result.actividad_web == "ganadería"
+
+
+# --- justificación (T3) ---------------------------------------------------
+
+
+def test_generar_justificacion_usa_datos_y_web():
+    capturado: dict[str, str] = {}
+
+    def chat(messages: Sequence[BaseMessage], _model: str) -> str:
+        capturado["last"] = str(messages[-1].content)
+        return "PORCICULTORES APA S.A.S. cría cerdos y solicita crédito para transporte."
+
+    fields = {
+        "beneficiario_razon_social": "PORCICULTORES APA S.A.S.",
+        "actividades": [{"actividad": "porcicultura", "destino": "transporte a clientes"}],
+    }
+    web = WebFindings(
+        razon_social="PORCICULTORES APA S.A.S.",
+        found=True,
+        contenido_web="Empresa con línea de transporte refrigerado de porcinos.",
+    )
+    texto = generar_justificacion(fields, web, chat=chat)
+
+    assert "transporte" in texto
+    assert "PORCICULTORES APA" in capturado["last"]  # datos del correo
+    assert "transporte refrigerado" in capturado["last"]  # contenido de la web
+
+
+def test_generar_justificacion_sin_web_degrada():
+    def chat(_m: Sequence[BaseMessage], _model: str) -> str:
+        return "Justificación redactada solo con datos del correo."
+
+    fields = {"beneficiario_razon_social": "X", "actividades": [{"actividad": "café"}]}
+    texto = generar_justificacion(fields, None, chat=chat)
+    assert texto.startswith("Justificación")
+
+
+def test_generar_justificacion_sin_datos_devuelve_vacio():
+    def chat(_m: Sequence[BaseMessage], _model: str) -> str:
+        raise AssertionError("no debería invocar el LLM sin datos")
+
+    assert generar_justificacion({}, None, chat=chat) == ""
+
+
+def test_maybe_generar_justificacion_respeta_la_del_correo(monkeypatch):
+    from agropecuario import runner
+
+    captured: dict[str, Any] = {}
+    monkeypatch.setattr(runner.db, "update_run", lambda run_id, **kw: captured.update(kw))
+    fields = {"justificacion_tecnica": "ya venía del correo", "actividades": []}
+    runner._maybe_generar_justificacion(1, fields, None)
+    assert fields["justificacion_tecnica"] == "ya venía del correo"
+    assert "fields_json" not in captured  # no se tocó
+
+
+def test_maybe_generar_justificacion_rellena_si_falta(monkeypatch):
+    from agropecuario import runner
+    from agropecuario.investigacion import justificacion
+
+    monkeypatch.setattr(justificacion, "generar_justificacion", lambda f, w: "texto nuevo")
+    captured: dict[str, Any] = {}
+    monkeypatch.setattr(runner.db, "update_run", lambda run_id, **kw: captured.update(kw))
+    fields: dict[str, Any] = {"actividades": [{"actividad": "café"}]}
+    runner._maybe_generar_justificacion(1, fields, None)
+    assert fields["justificacion_tecnica"] == "texto nuevo"
+    assert captured["fields_json"] == fields
 
 
 # --- cableado en code_resolver + enricher ---------------------------------
@@ -212,9 +297,9 @@ def test_investigar_web_guarda_flag_y_devuelve_contexto(monkeypatch):
         "beneficiario_razon_social": "PORCICOLA APA S.A.S.",
         "actividades": [{"actividad": "porcicultura"}],
     }
-    ctx = runner._investigar_web(1, fields)
+    findings = runner._investigar_web(1, fields)
 
-    assert ctx == "cría de cerdos"
+    assert findings.found and findings.resumen == "cría de cerdos"
     assert captured["discrepancia_correo_web"] is True
     assert captured["web_actividad_resumen"] == "cría de cerdos"
     assert captured["web_fuentes_json"] == ["http://x"]

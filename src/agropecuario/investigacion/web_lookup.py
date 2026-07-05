@@ -31,6 +31,8 @@ SearchFn = Callable[[str], dict[str, Any]]
 # Cuántas fuentes/URLs se conservan y cuánto se recorta el resumen del contexto.
 MAX_FUENTES = 5
 MAX_RESUMEN_CHARS = 1200
+# El contenido crudo del sitio (para redactar la justificación) se recorta más largo.
+MAX_CONTENIDO_CHARS = 4000
 
 
 class WebFindings(BaseModel):
@@ -40,6 +42,8 @@ class WebFindings(BaseModel):
     found: bool = False
     resumen: str = ""  # texto que describe a qué se dedica la empresa
     fuentes: list[str] = Field(default_factory=list)  # URLs consultadas
+    sitio_oficial: str | None = None  # URL que parece el sitio oficial de la empresa
+    contenido_web: str = ""  # texto extraído del sitio (insumo de la justificación)
 
 
 def lookup_company(razon_social: str, search: SearchFn | None = None) -> WebFindings:
@@ -65,10 +69,29 @@ def lookup_company(razon_social: str, search: SearchFn | None = None) -> WebFind
 
     resumen = answer or " ".join(snippets[:3])
     resumen = _truncate(resumen, MAX_RESUMEN_CHARS)
+
+    # Contenido del sitio para redactar la justificación: primer resultado con
+    # texto crudo (Tavily lo devuelve en `raw_content` con include_raw_content).
+    sitio_oficial = fuentes[0] if fuentes else None
+    contenido_web = ""
+    for r in results:
+        raw_content = str(r.get("raw_content") or "").strip()
+        if raw_content:
+            contenido_web = _truncate(raw_content, MAX_CONTENIDO_CHARS)
+            sitio_oficial = str(r.get("url") or sitio_oficial)
+            break
+
     found = bool(resumen)
     if not found:
         logger.info("web_lookup.sin_resultados", razon_social=razon)
-    return WebFindings(razon_social=razon, found=found, resumen=resumen, fuentes=fuentes)
+    return WebFindings(
+        razon_social=razon,
+        found=found,
+        resumen=resumen,
+        fuentes=fuentes,
+        sitio_oficial=sitio_oficial,
+        contenido_web=contenido_web,
+    )
 
 
 def _truncate(text: str, n: int) -> str:
@@ -87,5 +110,6 @@ def _default_search(query: str) -> dict[str, Any]:
         query=query,
         max_results=MAX_FUENTES,
         include_answer=True,
+        include_raw_content=True,  # trae el texto del sitio para la justificación
         search_depth="basic",
     )
