@@ -89,6 +89,7 @@ def process_thread(
 
         fields: dict[str, Any] = {}
         aprobado = True
+        contexto_web: str | None = None
         if use_llm and settings.openai_api_key:
             from .generacion.mapper import map_content_to_fields
             from .validacion.rule_engine import load_rules
@@ -124,11 +125,15 @@ def process_thread(
             if not aprobado:
                 db.update_run(run_id, status="incomplete")
 
+            # Investigación web de la razón social: apoya al resolver y deja un
+            # flag de discrepancia. El correo siempre manda; esto no lo altera.
+            contexto_web = _investigar_web(run_id, fields)
+
         # Genera el Excel + PDF aunque el formulario esté incompleto: se rellenan
         # con los datos disponibles (las celdas sin dato quedan en blanco). El
         # estado final sigue reflejando la incompletitud.
         if render and fields:
-            paths = _render_outputs(fields, thread_id)
+            paths = _render_outputs(fields, thread_id, contexto_web=contexto_web)
             db.update_run(
                 run_id,
                 excel_path=str(paths["excel"]),
@@ -145,14 +150,65 @@ def process_thread(
         return run_id
 
 
-def _render_outputs(fields: dict[str, Any], thread_id: str) -> dict[str, Path]:
+def _investigar_web(run_id: int, fields: dict[str, Any]) -> str | None:
+    """Busca la razón social en la web, guarda el flag de discrepancia y devuelve
+    el resumen de la actividad (o `None` si no aplica / degrada).
+
+    Regla de oro: el correo SIEMPRE manda. La web solo (a) aporta contexto al
+    resolver y (b) marca discrepancia para el dashboard.
+    """
+    settings = get_settings()
+    if not (settings.web_lookup_enabled and settings.tavily_api_key):
+        return None
+    razon = fields.get("beneficiario_razon_social")
+    if not razon:
+        return None
+
+    from .investigacion.comparador import compare_actividades
+    from .investigacion.web_lookup import lookup_company
+
+    findings = lookup_company(str(razon))
+    if not findings.found:
+        return None
+
+    mismatch = compare_actividades(_correo_actividad(fields), findings)
+    db.update_run(
+        run_id,
+        discrepancia_correo_web=mismatch.discrepancia,
+        web_actividad_resumen=findings.resumen,
+        web_fuentes_json=findings.fuentes,
+    )
+    if mismatch.discrepancia:
+        logger.warning(
+            "runner.discrepancia_correo_web",
+            razon_social=razon,
+            explicacion=mismatch.explicacion,
+        )
+    return findings.resumen
+
+
+def _correo_actividad(fields: dict[str, Any]) -> str:
+    """Concatena la descripción de la actividad del correo (para comparar con la web)."""
+    partes: list[str] = []
+    for act in fields.get("actividades") or []:
+        for key in ("actividad", "destino", "descripcion_rubro"):
+            value = act.get(key)
+            if value:
+                partes.append(str(value))
+    # Dedup preservando orden.
+    return " · ".join(dict.fromkeys(partes))
+
+
+def _render_outputs(
+    fields: dict[str, Any], thread_id: str, contexto_web: str | None = None
+) -> dict[str, Path]:
     """Consolida campos (defaults + códigos sec. 5 + cronograma) y renderiza Excel + PDF."""
     from .generacion.enricher import enrich_fields
     from .generacion.excel_writer import render_excel
     from .generacion.pdf_writer import render_pdf
 
     settings = get_settings()
-    merged = enrich_fields(fields)
+    merged = enrich_fields(fields, contexto_web=contexto_web)
 
     out_dir = settings.output_dir / thread_id
     out_dir.mkdir(parents=True, exist_ok=True)

@@ -101,12 +101,21 @@ class CodeResolver:
 
     # --- API pública -------------------------------------------------------
 
-    def resolve(self, actividad: str, destino: str | None = None) -> ResolverResult:
+    def resolve(
+        self,
+        actividad: str,
+        destino: str | None = None,
+        contexto_web: str | None = None,
+    ) -> ResolverResult:
         """Resuelve el destino Finagro para una actividad descrita en texto.
 
         `actividad` es la actividad económica del cliente (p. ej. "cultivo de
         café"); `destino` es el uso del crédito si se conoce ("renovación de
         cafetales"). El segundo afina la elección dentro de la categoría.
+
+        `contexto_web` es un resumen (opcional) de la actividad de la empresa
+        obtenido de una búsqueda web de su razón social; sirve de apoyo cuando el
+        correo es pobre. El correo SIEMPRE manda: la web solo desempata.
         """
         query = actividad if not destino else f"{actividad}. Destino del crédito: {destino}"
 
@@ -116,7 +125,7 @@ class CodeResolver:
             logger.warning("code_resolver.categoria_vacia", categoria=categoria)
             subset = self.catalogo.entries  # fallback: todo el catálogo
 
-        entry, confianza = self._pick_destino(query, subset)
+        entry, confianza = self._pick_destino(query, subset, contexto_web)
         return self._build_result(entry, categoria, confianza)
 
     # --- pasos LLM ---------------------------------------------------------
@@ -146,7 +155,7 @@ class CodeResolver:
         return categorias[0]
 
     def _pick_destino(
-        self, query: str, subset: list[CatalogoEntry]
+        self, query: str, subset: list[CatalogoEntry], contexto_web: str | None = None
     ) -> tuple[CatalogoEntry, str]:
         catalogo_txt = "\n".join(f"{i}. {e.resumen()}" for i, e in enumerate(subset))
         contexto = self._manual_contexto(query)
@@ -156,6 +165,12 @@ class CodeResolver:
             if contexto
             else ""
         )
+        bloque_web = (
+            f"Contexto externo sobre la empresa (búsqueda web de su razón social; "
+            f"úsalo solo como apoyo, el correo SIEMPRE manda):\n{contexto_web}\n\n"
+            if contexto_web
+            else ""
+        )
         messages = [
             SystemMessage(content=_SYSTEM),
             HumanMessage(
@@ -163,6 +178,7 @@ class CodeResolver:
                     "Paso 2 de 2 — elige el destino de crédito que mejor encaja.\n\n"
                     f"Actividad del cliente:\n{query}\n\n"
                     f"{bloque_manual}"
+                    f"{bloque_web}"
                     f"Destinos candidatos:\n{catalogo_txt}\n\n"
                     "Elige el índice del destino más específico y correcto. Indica "
                     'tu confianza ("alta", "media" o "baja").\n'

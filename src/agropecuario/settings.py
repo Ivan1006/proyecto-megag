@@ -28,6 +28,11 @@ class Settings(BaseSettings):
         default="text-embedding-3-small", alias="EMBEDDING_MODEL"
     )
 
+    # Investigación web (Tavily) para apoyar al code_resolver con la razón social.
+    # Si falta la llave, el lookup degrada (se desactiva) sin romper el flujo.
+    tavily_api_key: str = Field(default="", alias="TAVILY_API_KEY")
+    web_lookup_enabled: bool = Field(default=True, alias="WEB_LOOKUP_ENABLED")
+
     # Google
     google_client_secrets: Path = Field(
         default=Path("./secrets/client_secret.json"), alias="GOOGLE_CLIENT_SECRETS"

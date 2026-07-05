@@ -100,6 +100,12 @@
                 {% if r.error %}title="{{ r.error }}"{% endif %}>
             {{ r.status }}
           </span>
+          {% if r.discrepancia_correo_web == 1 %}
+          <span class="inline-block px-2 py-0.5 rounded text-xs bg-orange-100 text-orange-800 ml-1"
+                title="La actividad del correo no coincide con la búsqueda web de la razón social">
+            ⚠ discrepancia web
+          </span>
+          {% endif %}
           {% if r.error %}
           <div class="text-xs text-rose-700 mt-1 truncate" title="{{ r.error }}">
             {{ r.error[:80] }}{% if r.error|length > 80 %}…{% endif %}
