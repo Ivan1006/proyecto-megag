@@ -114,9 +114,12 @@ identificacion_beneficiario:
 # === Campos cuyo valor se distribuye un dígito por celda ===
 # Útil para códigos de actividad/destino que tienen un cuadro por dígito.
 campos_por_digito:
+  # Sección 6: el código de la actividad económica productiva es el MISMO código
+  # Finagro (6 dígitos) de la actividad principal de la sección 5 (cod_rubro). El
+  # enricher lo deriva; C49 y N57:S57 muestran siempre el mismo código.
   actividad_economica_codigo:
-    celdas: [N57, O57, P57, Q57]
-    longitud: 4          # padea con ceros a la izquierda si es más corto
+    celdas: [N57, O57, P57, Q57, R57, S57]
+    longitud: 6          # padea con ceros a la izquierda si es más corto
     alinear: derecha     # alineación al rellenar (derecha = los ceros van adelante)
 
 # Marcador usado para celdas hardcoded (referencia para defaults.yaml).
