@@ -125,9 +125,12 @@ def process_thread(
             if not aprobado:
                 db.update_run(run_id, status="incomplete")
 
-            # Investigación web de la razón social: apoya al resolver y deja un
-            # flag de discrepancia. El correo siempre manda; esto no lo altera.
-            contexto_web = _investigar_web(run_id, fields)
+            # Investigación web de la razón social: apoya al resolver, deja un
+            # flag de discrepancia y alimenta la justificación. El correo manda.
+            findings = _investigar_web(run_id, fields)
+            if findings and findings.found:
+                contexto_web = findings.resumen
+            _maybe_generar_justificacion(run_id, fields, findings)
 
         # Genera el Excel + PDF aunque el formulario esté incompleto: se rellenan
         # con los datos disponibles (las celdas sin dato quedan en blanco). El
@@ -150,12 +153,13 @@ def process_thread(
         return run_id
 
 
-def _investigar_web(run_id: int, fields: dict[str, Any]) -> str | None:
+def _investigar_web(run_id: int, fields: dict[str, Any]):
     """Busca la razón social en la web, guarda el flag de discrepancia y devuelve
-    el resumen de la actividad (o `None` si no aplica / degrada).
+    los hallazgos (`WebFindings`) o `None` si no aplica / degrada.
 
     Regla de oro: el correo SIEMPRE manda. La web solo (a) aporta contexto al
-    resolver y (b) marca discrepancia para el dashboard.
+    resolver, (b) marca discrepancia para el dashboard y (c) alimenta la
+    justificación.
     """
     settings = get_settings()
     if not (settings.web_lookup_enabled and settings.tavily_api_key):
@@ -184,7 +188,24 @@ def _investigar_web(run_id: int, fields: dict[str, Any]) -> str | None:
             razon_social=razon,
             explicacion=mismatch.explicacion,
         )
-    return findings.resumen
+    return findings
+
+
+def _maybe_generar_justificacion(run_id: int, fields: dict[str, Any], findings) -> None:
+    """Redacta la justificación (B30) si el correo no la trae. Degrada sin web."""
+    if fields.get("justificacion_tecnica"):
+        return  # respeta lo que ya venga del correo
+    from .investigacion.justificacion import generar_justificacion
+
+    try:
+        texto = generar_justificacion(fields, findings)
+    except Exception as e:  # noqa: BLE001
+        logger.warning("runner.justificacion_failed", error=str(e))
+        return
+    if texto:
+        fields["justificacion_tecnica"] = texto
+        db.update_run(run_id, fields_json=fields)
+        logger.info("runner.justificacion_generada", chars=len(texto))
 
 
 def _correo_actividad(fields: dict[str, Any]) -> str:
