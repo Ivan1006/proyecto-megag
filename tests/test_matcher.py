@@ -96,6 +96,25 @@ def test_resolve_deterministico_no_llama_al_llm():
     assert result.confianza == "alta"
 
 
+def test_pick_destino_recibe_razon_social_en_el_prompt():
+    """Fix A: la razón social se inyecta en el prompt de decisión del LLM."""
+    capturado: dict[str, str] = {}
+
+    def chat(messages: Sequence[BaseMessage], _model: str) -> str:
+        capturado["last"] = str(messages[-1].content)
+        return json.dumps({"indice": 0, "confianza": "media"})
+
+    resolver = CodeResolver(
+        catalogo=get_catalogo(), chat=chat, retriever=_StubNoManual()
+    )
+    resolver.resolve(
+        "renovación de crédito cartera sustitutiva",
+        beneficiario="PORCICULTORES APA S.A.S.",
+    )
+    assert "PORCICULTORES APA" in capturado["last"]
+    assert "Razón social" in capturado["last"]
+
+
 def test_resolve_porcicultura_evita_fag():
     def chat(_m: Sequence[BaseMessage], _model: str) -> str:
         # Elige el primer candidato del shortlist (todos porcinos).
