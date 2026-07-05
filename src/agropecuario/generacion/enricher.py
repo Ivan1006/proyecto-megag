@@ -61,7 +61,8 @@ def enrich_fields(
     merged: dict[str, Any] = {**defaults, **fields}
 
     actividades = merged.get("actividades") or []
-    merged["actividades"] = _resolve_codes(actividades, resolver, contexto_web)
+    beneficiario = merged.get("beneficiario_razon_social")
+    merged["actividades"] = _resolve_codes(actividades, resolver, contexto_web, beneficiario)
 
     _ensure_cronograma(merged, today or date.today())
 
@@ -84,6 +85,7 @@ def _resolve_codes(
     actividades: list[dict[str, Any]],
     resolver: CodeResolver | None,
     contexto_web: str | None = None,
+    beneficiario: str | None = None,
 ) -> list[dict[str, Any]]:
     """Completa los códigos Finagro de cada fila que no los traiga.
 
@@ -107,7 +109,10 @@ def _resolve_codes(
                     continue
             try:
                 res = _resolver.resolve(
-                    str(descripcion), act.get("destino"), contexto_web=contexto_web
+                    str(descripcion),
+                    act.get("destino"),
+                    contexto_web=contexto_web,
+                    beneficiario=beneficiario,
                 )
                 for key, value in res.to_actividad().items():
                     if value is not None:

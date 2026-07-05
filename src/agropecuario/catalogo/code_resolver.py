@@ -31,12 +31,16 @@ from ..logging_conf import get_logger
 from ..settings import get_settings
 from .loader import Catalogo, CatalogoEntry, get_catalogo
 from .manual_retriever import ManualRetriever, get_retriever
+from .matcher import entries_resolubles, match_destinos
 
 logger = get_logger(__name__)
 
 # Cuántos fragmentos del Manual de Servicios se inyectan como contexto al elegir
 # el destino. Editable si los prompts crecen demasiado.
 MANUAL_TOP_K = 5
+
+# Máximo de candidatos del match determinístico que se pasan al LLM para desempatar.
+MAX_SHORTLIST = 12
 
 # `chat(messages, model)` -> texto de la respuesta. Inyectable para tests.
 ChatFn = Callable[[Sequence[BaseMessage], str], str]
@@ -74,6 +78,7 @@ class ResolverResult(BaseModel):
     linea_credito: str | None = None
     categoria_macro: str
     confianza: str = "media"  # alta | media | baja
+    metodo: str = "llm"  # catalogo (determinístico) | llm (desempate) | fallback
 
     def to_actividad(self) -> dict[str, Any]:
         """Sub-dict de códigos para fusionar con los campos financieros."""
@@ -106,6 +111,7 @@ class CodeResolver:
         actividad: str,
         destino: str | None = None,
         contexto_web: str | None = None,
+        beneficiario: str | None = None,
     ) -> ResolverResult:
         """Resuelve el destino Finagro para una actividad descrita en texto.
 
@@ -113,25 +119,65 @@ class CodeResolver:
         café"); `destino` es el uso del crédito si se conoce ("renovación de
         cafetales"). El segundo afina la elección dentro de la categoría.
 
+        `beneficiario` (razón social) se usa como señal fuerte del giro real del
+        cliente en el match determinístico (p. ej. "PORCICULTORES APA" → porcinos).
+
         `contexto_web` es un resumen (opcional) de la actividad de la empresa
-        obtenido de una búsqueda web de su razón social; sirve de apoyo cuando el
-        correo es pobre. El correo SIEMPRE manda: la web solo desempata.
+        obtenido de una búsqueda web; sirve de apoyo al LLM cuando el correo es
+        pobre. El correo SIEMPRE manda: la web solo desempata.
+
+        Estrategia (ver [[Tareas pendientes]] T5): el código sale del Anexo por
+        **match determinístico** sobre los nombres de destino; el LLM solo
+        desempata entre los candidatos o resuelve cuando no hay ninguno. Las
+        categorías no productivas (comisión FAG, prima seguro) quedan excluidas.
         """
-        query = actividad if not destino else f"{actividad}. Destino del crédito: {destino}"
+        query_llm = actividad if not destino else f"{actividad}. Destino del crédito: {destino}"
+        query_match = " ".join(x for x in (actividad, destino, beneficiario) if x)
 
-        categoria = self._pick_categoria(query)
-        subset = self.catalogo.by_categoria(categoria)
-        if not subset:
-            logger.warning("code_resolver.categoria_vacia", categoria=categoria)
-            subset = self.catalogo.entries  # fallback: todo el catálogo
+        resolubles = entries_resolubles(self.catalogo.entries)
+        matches = match_destinos(query_match, resolubles)
 
-        entry, confianza = self._pick_destino(query, subset, contexto_web)
-        return self._build_result(entry, categoria, confianza)
+        # (a) Determinístico: un nombre del catálogo queda cubierto por completo
+        #     con igualdad EXACTA y de forma única → se usa ese código sin LLM.
+        completos = [m for m in matches if m.exact_full]
+        if len(completos) == 1:
+            entry = completos[0].entry
+            logger.info(
+                "code_resolver.match_deterministico",
+                cod_rubro=entry.cod_destino,
+                destino=entry.destino,
+                actividad=actividad,
+            )
+            return self._build_result(entry, entry.categoria_macro, "alta", metodo="catalogo")
+
+        # (b) Hay candidatos por palabra clave → el LLM desempata SOLO entre ellos.
+        if matches:
+            shortlist = [m.entry for m in matches[:MAX_SHORTLIST]]
+            entry, confianza = self._pick_destino(query_llm, shortlist, contexto_web)
+            return self._build_result(entry, entry.categoria_macro, confianza, metodo="llm")
+
+        # (c) Sin candidatos → 2 pasos LLM sobre el catálogo resoluble.
+        return self._resolve_llm_2pasos(query_llm, resolubles, contexto_web)
 
     # --- pasos LLM ---------------------------------------------------------
 
-    def _pick_categoria(self, query: str) -> str:
-        categorias = self.catalogo.categorias
+    def _resolve_llm_2pasos(
+        self, query: str, resolubles: list[CatalogoEntry], contexto_web: str | None
+    ) -> ResolverResult:
+        """Fallback: acota por categoría macro y elige destino, ambos vía LLM."""
+        categoria = self._pick_categoria(query, resolubles)
+        subset = [e for e in resolubles if e.categoria_macro == categoria]
+        if not subset:
+            logger.warning("code_resolver.categoria_vacia", categoria=categoria)
+            subset = resolubles  # fallback: todo el catálogo resoluble
+        entry, confianza = self._pick_destino(query, subset, contexto_web)
+        return self._build_result(entry, entry.categoria_macro, confianza, metodo="fallback")
+
+    def _pick_categoria(self, query: str, entries: list[CatalogoEntry]) -> str:
+        categorias: list[str] = []
+        for e in entries:
+            if e.categoria_macro not in categorias:
+                categorias.append(e.categoria_macro)
         if len(categorias) <= 1:
             return categorias[0] if categorias else ""
 
@@ -209,7 +255,7 @@ class CodeResolver:
         return self.retriever.contexto(query, k=MANUAL_TOP_K)
 
     def _build_result(
-        self, entry: CatalogoEntry, categoria: str, confianza: str
+        self, entry: CatalogoEntry, categoria: str, confianza: str, metodo: str = "llm"
     ) -> ResolverResult:
         cod_linea = None
         if entry.linea_credito:
@@ -223,6 +269,7 @@ class CodeResolver:
             linea_credito=entry.linea_credito,
             categoria_macro=categoria,
             confianza=confianza,
+            metodo=metodo,
         )
 
     def _invoke_json(self, messages: Sequence[BaseMessage], model: str) -> dict[str, Any]:
