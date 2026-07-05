@@ -93,14 +93,23 @@ def test_retriever_sin_indice_no_revienta(tmp_path):
 
 
 def _fake_catalogo() -> Catalogo:
+    # Dos destinos de café: "café" no cubre ningún nombre al 100% → el resolver
+    # NO hace short-circuit determinístico y pasa por el LLM (que es lo que estos
+    # tests ejercitan: la inyección del contexto del manual en el paso 2).
     return Catalogo(
         entries=[
             CatalogoEntry(
                 categoria_macro="1. Producción",
-                cod_destino=141100,
-                destino="Café",
+                cod_destino=141101,
+                destino="Renovación café por siembra",
                 linea_credito="Inversión",
-            )
+            ),
+            CatalogoEntry(
+                categoria_macro="1. Producción",
+                cod_destino=132310,
+                destino="Sostenimiento café",
+                linea_credito="Capital de trabajo",
+            ),
         ]
     )
 
@@ -128,7 +137,7 @@ def test_code_resolver_inyecta_contexto_del_manual():
     )
     result = resolver.resolve("Cultivo de café", destino="Renovación")
 
-    assert result.cod_rubro == 141100
+    assert result.cod_rubro in {141101, 132310}
     assert "Manual de Servicios" in capturado["last"]
     assert "renovacion de cafetales" in capturado["last"]
 
@@ -142,4 +151,4 @@ def test_code_resolver_sin_manual_sigue_funcionando(tmp_path):
         catalogo=_fake_catalogo(), chat=chat, retriever=sin_indice
     )
     result = resolver.resolve("café")
-    assert result.cod_rubro == 141100  # degrada sin romper
+    assert result.cod_rubro in {141101, 132310}  # degrada sin romper

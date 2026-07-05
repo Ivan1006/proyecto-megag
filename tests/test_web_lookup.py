@@ -97,14 +97,22 @@ def test_comparador_sin_actividad_correo_usa_web_como_apoyo():
 
 
 def _fake_catalogo() -> Catalogo:
+    # Dos destinos de café: "café" no cubre ningún nombre al 100% → el resolver
+    # pasa por el LLM (donde se inyecta el contexto_web), no por el short-circuit.
     return Catalogo(
         entries=[
             CatalogoEntry(
                 categoria_macro="1. Producción",
-                cod_destino=141100,
-                destino="Café",
+                cod_destino=141101,
+                destino="Renovación café por siembra",
                 linea_credito="Inversión",
-            )
+            ),
+            CatalogoEntry(
+                categoria_macro="1. Producción",
+                cod_destino=132310,
+                destino="Sostenimiento café",
+                linea_credito="Capital de trabajo",
+            ),
         ]
     )
 
@@ -136,7 +144,7 @@ def test_enricher_propaga_contexto_web_al_resolver():
     seen: dict[str, Any] = {}
 
     class FakeResolver:
-        def resolve(self, actividad, destino=None, contexto_web=None):
+        def resolve(self, actividad, destino=None, contexto_web=None, beneficiario=None):
             seen["contexto_web"] = contexto_web
             from agropecuario.catalogo.code_resolver import ResolverResult
 
