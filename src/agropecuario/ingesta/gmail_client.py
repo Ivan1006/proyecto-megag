@@ -20,9 +20,14 @@ from ..settings import get_settings
 
 logger = get_logger(__name__)
 
+# `gmail.modify` es un superconjunto que cubre lectura, envío de respuestas
+# (`messages.send`) y modificación de etiquetas (`threads.modify` / `labels`).
+# Es el único scope necesario y arregla el `403 insufficientPermissions` al
+# marcar el hilo como `bot-procesado` (sin él, `watch-bot` reprocesaba el mismo
+# hilo en cada pasada). Cambiar esta lista invalida el token cacheado y obliga a
+# re-autenticar: `agropecuario auth`.
 SCOPES = [
-    "https://www.googleapis.com/auth/gmail.readonly",
-    "https://www.googleapis.com/auth/gmail.send",
+    "https://www.googleapis.com/auth/gmail.modify",
 ]
 
 
