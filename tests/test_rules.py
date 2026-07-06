@@ -73,3 +73,33 @@ def test_range_validation():
     validations = validate_fields({"predio_extension_has": -5}, rules)
     ha = next(v for v in validations if v.field_id == "predio_extension_has")
     assert ha.severity == "error"
+
+
+def test_campos_derivados_excluidos_de_la_validacion():
+    """Los campos que calcula el enricher (cronograma, código sec. 6) no deben
+    aparecer como brechas ni contar en la completitud: la validación corre ANTES
+    del enricher, así que siempre estarían 'ausentes' (brecha falsa)."""
+    rules = load_rules(RULES)
+    derivados = {"cronograma_fecha_inicial", "cronograma_fecha_final",
+                 "actividad_economica_codigo"}
+
+    # Están marcados como derivados y fuera de required/optional_ids.
+    assert derivados.isdisjoint(rules.optional_ids)
+    assert derivados.isdisjoint(rules.required_ids)
+
+    # Aunque falten por completo, no generan brechas ni salen en las validaciones.
+    validations = validate_fields(REQUIRED_OK, rules)
+    result = build_result(validations, rules)
+    assert derivados.isdisjoint({v.field_id for v in validations})
+    assert derivados.isdisjoint({g.field_id for g in result.gaps})
+
+
+def test_completitud_opcional_ignora_derivados():
+    """La completitud opcional se calcula solo sobre campos del correo; proveer
+    un cronograma (derivado) no la sube porque ya no cuenta en el denominador."""
+    rules = load_rules(RULES)
+    con_derivado = {**REQUIRED_OK, "cronograma_fecha_inicial": "01/01/2026"}
+    sin_derivado = dict(REQUIRED_OK)
+    r_con = build_result(validate_fields(con_derivado, rules), rules)
+    r_sin = build_result(validate_fields(sin_derivado, rules), rules)
+    assert r_con.completitud_opcionales == r_sin.completitud_opcionales

@@ -141,12 +141,17 @@ campos_opcionales:
     tipo: string
   - id: modalidad_pago_intereses
     tipo: string
+  # Derivados: los calcula el `enricher` tras la validación (no vienen del
+  # correo). `derivado: true` los excluye de brechas y completitud.
   - id: cronograma_fecha_inicial
     tipo: string
+    derivado: true
   - id: cronograma_fecha_final
     tipo: string
+    derivado: true
   - id: actividad_economica_codigo
     tipo: string
+    derivado: true
   - id: fag_cobertura_pct
     tipo: number
     rango: { min: 0, max: 100 }
