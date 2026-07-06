@@ -15,6 +15,13 @@ from google.auth.exceptions import RefreshError
 from agropecuario.ingesta import gmail_client as gc
 
 
+def test_scopes_incluye_modify():
+    """Regresión: sin `gmail.modify` el marcado de `bot-procesado` daba 403 y
+    `watch-bot` reprocesaba el mismo hilo en bucle. `modify` cubre además la
+    lectura y el envío de respuestas, así que es el único scope necesario."""
+    assert "https://www.googleapis.com/auth/gmail.modify" in gc.SCOPES
+
+
 def _dead_creds() -> MagicMock:
     """Credenciales expiradas cuyo refresh falla (refresh token muerto)."""
     creds = MagicMock()
