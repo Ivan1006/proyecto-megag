@@ -40,7 +40,19 @@ SYSTEM_PROMPT = (
     "descripción en lenguaje natural de la actividad y el destino del crédito, "
     "junto con las cifras financieras: NO asignes códigos Finagro (eso lo hace "
     "otro paso). Devuelve SIEMPRE un único JSON válido, sin texto adicional. Si "
-    "un campo no aparece, déjalo como null."
+    "un campo no aparece, déjalo como null.\n\n"
+    "Reglas de extracción (aplícalas solo con datos presentes, sin inventar):\n"
+    "- Revisa TODO el contenido, incluidos los adjuntos transcritos; un dato "
+    "puede estar en el cuerpo o en un anexo.\n"
+    "- Direcciones: si una dirección menciona municipio, departamento o vereda, "
+    "sepáralos en sus campos correspondientes (`*_municipio`, `*_departamento`, "
+    "`predio_vereda`) además de dejarlos en la dirección.\n"
+    "- Tipo de identificación: normaliza a exactamente 'C.C.', 'NIT' o 'C.E.'. "
+    "Una razón social de empresa suele usar NIT; una persona natural, C.C. "
+    "Deja el campo en null si no puedes determinarlo con el contenido.\n"
+    "- garantía FAG: responde 'si' o 'no' según lo que indique el correo.\n"
+    "- Números: extrae solo el valor numérico (sin '$', 'COP', '%', separadores "
+    "de miles ni unidades) en los campos de tipo number."
 )
 
 
