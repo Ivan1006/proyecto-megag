@@ -21,6 +21,10 @@ class FieldRule:
     valores_permitidos: list[Any] | None = None
     # Para campos `tipo: array`: sub-esquema de cada elemento de la lista.
     item_fields: list[FieldRule] = field(default_factory=list)
+    # Campo que NO viene del correo sino que lo calcula el `enricher`
+    # (cronograma, código de la sección 6). Se excluye de la validación para
+    # que no aparezca como brecha falsa (la validación corre antes del enricher).
+    derivado: bool = False
 
 
 @dataclass
@@ -43,11 +47,11 @@ class RuleSet:
 
     @property
     def required_ids(self) -> list[str]:
-        return [c.id for c in self.campos if c.required]
+        return [c.id for c in self.campos if c.required and not c.derivado]
 
     @property
     def optional_ids(self) -> list[str]:
-        return [c.id for c in self.campos if not c.required]
+        return [c.id for c in self.campos if not c.required and not c.derivado]
 
     def by_id(self, field_id: str) -> FieldRule | None:
         return next((c for c in self.campos if c.id == field_id), None)
@@ -98,4 +102,5 @@ def _field_from_dict(d: dict, required: bool) -> FieldRule:
         rango=d.get("rango"),
         valores_permitidos=d.get("valores_permitidos"),
         item_fields=item_fields,
+        derivado=d.get("derivado", False),
     )

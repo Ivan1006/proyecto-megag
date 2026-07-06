@@ -10,7 +10,14 @@ from .rule_engine import FieldRule, RuleSet
 
 
 def validate_fields(fields: dict[str, Any], rules: RuleSet) -> list[FieldValidation]:
-    return [_validate_one(rule, fields.get(rule.id)) for rule in rules.campos]
+    # Los campos derivados (cronograma, código de la sección 6) los calcula el
+    # `enricher` DESPUÉS de la validación; validarlos aquí los marcaría como
+    # brechas falsas. Se excluyen por completo del reporte y de la completitud.
+    return [
+        _validate_one(rule, fields.get(rule.id))
+        for rule in rules.campos
+        if not rule.derivado
+    ]
 
 
 def _validate_one(rule: FieldRule, value: Any) -> FieldValidation:
