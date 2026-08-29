@@ -1,0 +1,63 @@
+{
+  "beneficiario_razon_social": "María Gómez Restrepo",
+  "beneficiario_id_tipo": "C.C.",
+  "beneficiario_id_numero": "43.185.672",
+  "beneficiario_direccion": "Vereda El Vergel, Finca La Esperanza",
+  "beneficiario_telefono": "3001234567",
+  "beneficiario_municipio": "Chinchiná",
+  "beneficiario_departamento": "Caldas",
+
+  "tipo_beneficiario": "pequeño",
+  "monto_total_activos": 180000000,
+  "fecha_balance_dia": 30,
+  "fecha_balance_mes": 4,
+  "fecha_balance_anio": 2026,
+
+  "predio_nombre_direccion": "La Esperanza – Vereda El Vergel",
+  "predio_extension_has": 12.5,
+  "predio_extension_mts2": 0,
+  "predio_departamento": "Caldas",
+  "predio_municipio": "Chinchiná",
+  "predio_vereda": "El Vergel",
+  "tenencia": "propia",
+
+  "forma_de_llegar": "Desde el casco urbano de Chinchiná, tomar la vía a Palestina, recorrer 8 km hasta el cruce de la vereda El Vergel; girar a la derecha y avanzar 1.2 km. La finca queda a mano izquierda con portón rojo.",
+
+  "justificacion_tecnica": "El proyecto contempla la renovación de 5 hectáreas del cultivo de café variedad Castillo en el predio La Esperanza, con miras a recuperar productividad luego de 18 años del cultivo actual. Se incluye la compra de insumos para fertilización (correctivos de suelo, fertilizantes edáficos y foliares), control fitosanitario, mano de obra para preparación, siembra y sostenimiento durante el primer año, y asistencia técnica especializada. El plan está respaldado por el análisis de suelos realizado por el laboratorio de Cenicafé y por el diagnóstico fitosanitario del extensionista.",
+
+  "modalidad_pago_capital": "Cuotas semestrales",
+  "modalidad_pago_intereses": "Trimestre vencido",
+
+  "actividades": [
+    {
+      "cod_linea": 2,
+      "cod_rubro": 111350,
+      "descripcion_rubro": "Café",
+      "unidades_hectareas": 5,
+      "valor_total_proyecto": 35000,
+      "valor_total_credito": 30000,
+      "plazo_meses": 84,
+      "periodo_gracia_meses": 24,
+      "puntos_dtf": 4
+    },
+    {
+      "cod_linea": 1,
+      "cod_rubro": 911000,
+      "descripcion_rubro": "Asistencia técnica",
+      "unidades_hectareas": 5,
+      "valor_total_proyecto": 5000,
+      "valor_total_credito": 5000,
+      "plazo_meses": 36,
+      "periodo_gracia_meses": 6,
+      "puntos_dtf": 4
+    }
+  ],
+
+  "cronograma_fecha_inicial": "01/06/2026",
+  "cronograma_fecha_final": "01/06/2033",
+
+  "actividad_economica_descripcion": "Cultivo de café",
+
+  "garantia_fag": "si",
+  "fag_cobertura_pct": 80
+}

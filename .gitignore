@@ -20,7 +20,13 @@ token*.json
 credentials*.json
 
 # ───────── Datos y salidas locales ─────────
-data/
+# Salidas, BD y temporales del pipeline. Se excluye TODO menos los datos
+# sintéticos de prueba: CLAUDE.md los ubica en data/samples/ y la verificación
+# obligatoria (`fill-template --data data/samples/credito_demo.json`) los
+# necesita, así que ignorarlos dejaba esa comprobación sin poder correr fuera de
+# la máquina de quien los creó. NUNCA meter datos reales de clientes ahí.
+data/*
+!data/samples/
 output/
 *.sqlite
 *.sqlite-journal
