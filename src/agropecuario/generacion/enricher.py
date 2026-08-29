@@ -65,6 +65,7 @@ def enrich_fields(
     merged["actividades"] = _resolve_codes(actividades, resolver, contexto_web, beneficiario)
 
     _set_actividad_economica_codigo(merged)
+    _set_tamano_productor(merged)
     _ensure_cronograma(merged, today or date.today())
 
     for detalle in validate_sumas(merged["actividades"]):
@@ -146,6 +147,55 @@ def _set_actividad_economica_codigo(fields: dict[str, Any]) -> None:
         if cod:
             fields["actividad_economica_codigo"] = str(cod)
             return
+
+
+# --- sección 1: tamaño del productor ---------------------------------------
+
+def _set_tamano_productor(fields: dict[str, Any]) -> None:
+    """Clasifica al beneficiario con la regla determinística del Manual 7.1.
+
+    Las cifras salen de los estados financieros que vienen adjuntos al correo. Si
+    faltan, `clasificar()` devuelve `None` y se respeta lo que el correo dijera
+    (que puede no ser nada): no se inventa un tamaño.
+
+    Cuando sí se puede calcular, **el cálculo manda** sobre lo que afirmara el
+    correo, porque los estados financieros son evidencia más dura que la
+    redacción del solicitante. Si discrepan se deja constancia en el log.
+    """
+    from ..clasificacion.tamano_productor import clasificar
+
+    declarado = fields.get("tipo_beneficiario")
+    try:
+        resultado = clasificar(
+            fields.get("beneficiario_ingresos_brutos_anuales"),
+            fields.get("monto_total_activos"),
+        )
+    except Exception as e:  # noqa: BLE001
+        logger.warning("enricher.tamano_productor_failed", error=str(e))
+        return
+
+    if resultado is None:
+        logger.info(
+            "enricher.tamano_no_calculable",
+            motivo="faltan ingresos brutos anuales y/o activos totales",
+            declarado=declarado,
+        )
+        return
+
+    fields["tipo_beneficiario"] = resultado.tamano.value
+    logger.info(
+        "enricher.tamano_calculado",
+        tamano=resultado.tamano.value,
+        motivo=resultado.motivo,
+        ingresos_uvb=resultado.ingresos_uvb,
+        activos_uvb=resultado.activos_uvb,
+    )
+    if declarado and str(declarado).strip().lower() not in resultado.tamano.value:
+        logger.warning(
+            "enricher.tamano_discrepa_del_correo",
+            declarado=declarado,
+            calculado=resultado.tamano.value,
+        )
 
 
 # --- cronograma de inversión ----------------------------------------------
