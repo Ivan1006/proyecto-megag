@@ -37,10 +37,27 @@ campos_requeridos:
     descripcion: "Departamento del beneficiario"
     tipo: string
 
+  # Lo CALCULA el enricher con `clasificacion/tamano_productor.py` a partir de los
+  # ingresos brutos anuales y los activos totales (Manual Finagro 7.1), así que va
+  # marcado como derivado: la validación corre antes del enricher y si no se
+  # excluye sale como brecha falsa. Si faltan los estados financieros se conserva
+  # lo que el correo dijera.
   - id: tipo_beneficiario
-    descripcion: "Pequeño / Mediano / Grande productor"
+    descripcion: "Segmento del productor según el numeral 7.1 del Manual Finagro"
     tipo: string
-    valores_permitidos: ["pequeño", "pequeno", "mediano", "grande"]
+    derivado: true
+    valores_permitidos:
+      # Los cuatro segmentos del manual (el formulario solo tiene 3 casillas: los
+      # dos de pequeño comparten la de F14).
+      - "pequeño productor de ingresos bajos"
+      - "pequeño productor"
+      - "mediano productor"
+      - "gran productor"
+      # Formas cortas heredadas: las usan el demo y los correos redactados a mano.
+      - "pequeño"
+      - "pequeno"
+      - "mediano"
+      - "grande"
 
   # === Predio ===
   - id: predio_nombre_direccion
@@ -127,8 +144,19 @@ campos_requeridos:
     valores_permitidos: ["si", "sí", "no"]
 
 campos_opcionales:
-  - id: monto_total_activos
+  # === Estados financieros: entradas de la clasificación del tamaño (7.1) ===
+  # Vienen de los estados financieros adjuntos al correo. Sin AMBAS cifras la
+  # calculadora no puede clasificar y `tipo_beneficiario` se queda con lo que
+  # dijera el correo. Pasarlas a `campos_requeridos` haría que su ausencia salga
+  # como brecha en el dashboard.
+  - id: beneficiario_ingresos_brutos_anuales
+    descripcion: "Ingresos brutos anuales del beneficiario, en pesos"
     tipo: number
+    alias: ["ingresos_brutos", "ingresos_anuales", "ingresos_operacionales"]
+  - id: monto_total_activos
+    descripcion: "Activos totales del beneficiario, en pesos"
+    tipo: number
+    alias: ["activos_totales", "total_activos"]
   - id: fecha_balance_dia
     tipo: number
   - id: fecha_balance_mes

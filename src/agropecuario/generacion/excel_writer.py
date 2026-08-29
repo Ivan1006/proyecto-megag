@@ -86,7 +86,14 @@ def _write_simple_fields(ws, fields: dict, campos_map: dict) -> None:
         if field_id in fields:
             _set(ws, coord, fields[field_id])
 
+    # El manual define 4 segmentos y el formulario solo tiene 3 casillas: los dos
+    # de pequeño comparten F14. La clasificación fina se conserva en el campo.
     _write_marks(ws, fields, campos_map, "tipo_beneficiario", {
+        "pequeño productor de ingresos bajos": "marca_beneficiario_pequeno",
+        "pequeño productor": "marca_beneficiario_pequeno",
+        "mediano productor": "marca_beneficiario_mediano",
+        "gran productor":    "marca_beneficiario_grande",
+        # Formas cortas heredadas (demo y correos redactados a mano).
         "pequeño": "marca_beneficiario_pequeno",
         "pequeno": "marca_beneficiario_pequeno",
         "mediano": "marca_beneficiario_mediano",

@@ -1,0 +1,41 @@
+# Clasificación del tipo de productor — Manual de Servicios Finagro,
+# numeral 7.1 "Clasificación de los Tipos de Productor" (pp. 16-18, v. 26.22).
+#
+# El manual expresa TODOS los umbrales en UVB, nunca en pesos: la conversión se
+# hace aquí para poder comparar contra las cifras del correo, que vienen en COP.
+version: 1
+
+# --- Unidad de Valor Básico ------------------------------------------------
+# La creó el Art. 313 de la Ley 2294 de 2023 (PND 2022-2026) y REEMPLAZA a la UVT
+# y al salario mínimo como unidad de referencia de Finagro.
+#
+# ⚠️ CADUCA: se ajusta ANUALMENTE por la variación del IPC sin alimentos. Hay que
+# reconfirmar el valor cada año o la clasificación saldrá mal. El manual remite a
+# su "Anexo 1.5 Equivalencias" para la tabla oficial, pero ese anexo NO está en el
+# PDF indexado en config/manual_index/.
+uvb_cop: 12110
+uvb_vigencia: 2026        # año al que corresponde `uvb_cop`
+
+# --- Umbrales (en UVB, tal como los define el manual) ----------------------
+umbrales_uvb:
+  # Ingresos brutos anuales
+  ingresos_pequeno_bajos: 5302      # pequeño de ingresos bajos: hasta este valor
+  ingresos_pequeno: 14844           # pequeño: hasta este valor
+  ingresos_mediano: 288402          # mediano: hasta este valor; por encima, grande
+  # Activos totales
+  activos_pequeno: 47714            # ambos segmentos de pequeño: hasta este valor
+  activos_mediano: 530150           # mediano: hasta este valor; por encima, grande
+
+# --- Casilla del formulario ------------------------------------------------
+# El template oficial solo tiene TRES casillas para el tipo de beneficiario
+# (F14 pequeño / H14 mediano / J14 grande), mientras que el manual define CUATRO
+# segmentos. Los dos de pequeño comparten casilla: no se puede añadir una cuarta
+# sin regenerar el Excel, y eso está prohibido por los guardarraíles.
+#
+# La clasificación fina se conserva igualmente en `tipo_beneficiario` (queda en
+# la BD y en el dashboard); esto solo define qué X se pinta en el papel.
+marca_formulario:
+  "pequeño productor de ingresos bajos": pequeño
+  "pequeño productor": pequeño
+  "mediano productor": mediano
+  "gran productor": grande

@@ -157,3 +157,51 @@ def test_no_muta_el_dict_de_entrada():
     fields = {"actividades": [{"actividad": "café"}]}
     enrich_fields(fields, resolver=_StubResolver(), today=FECHA, defaults={})
     assert fields == {"actividades": [{"actividad": "café"}]}  # intacto
+
+
+# --- tamaño del productor (Manual Finagro 7.1) -----------------------------
+
+def test_enricher_calcula_el_tamano_desde_los_estados_financieros():
+    """Con ingresos y activos, el tipo de beneficiario sale del cálculo."""
+    fields = {
+        "beneficiario_ingresos_brutos_anuales": 3_000_000_000,
+        "monto_total_activos": 100_000_000,
+        "actividades": [],
+    }
+    out = enrich_fields(fields, defaults={}, resolver=None)
+    assert out["tipo_beneficiario"] == "mediano productor"
+
+
+def test_enricher_el_calculo_manda_sobre_lo_que_diga_el_correo():
+    """Los estados financieros son evidencia más dura que la redacción."""
+    fields = {
+        "tipo_beneficiario": "pequeño",          # lo que afirmaba el correo
+        "beneficiario_ingresos_brutos_anuales": 10_000_000_000,
+        "monto_total_activos": 100_000_000,
+        "actividades": [],
+    }
+    out = enrich_fields(fields, defaults={}, resolver=None)
+    assert out["tipo_beneficiario"] == "gran productor"
+
+
+def test_enricher_respeta_el_correo_si_faltan_los_estados_financieros():
+    """Sin cifras no se inventa un tamaño: se conserva lo extraído del correo."""
+    fields = {"tipo_beneficiario": "pequeño", "actividades": []}
+    out = enrich_fields(fields, defaults={}, resolver=None)
+    assert out["tipo_beneficiario"] == "pequeño"
+
+
+def test_enricher_no_inventa_tamano_si_no_hay_nada():
+    fields = {"actividades": []}
+    out = enrich_fields(fields, defaults={}, resolver=None)
+    assert "tipo_beneficiario" not in out
+
+
+def test_enricher_no_muta_el_dict_de_entrada_al_clasificar():
+    fields = {
+        "beneficiario_ingresos_brutos_anuales": 3_000_000_000,
+        "monto_total_activos": 100_000_000,
+        "actividades": [],
+    }
+    enrich_fields(fields, defaults={}, resolver=None)
+    assert "tipo_beneficiario" not in fields

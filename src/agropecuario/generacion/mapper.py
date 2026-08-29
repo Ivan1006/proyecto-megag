@@ -52,7 +52,18 @@ SYSTEM_PROMPT = (
     "Deja el campo en null si no puedes determinarlo con el contenido.\n"
     "- garantía FAG: responde 'si' o 'no' según lo que indique el correo.\n"
     "- Números: extrae solo el valor numérico (sin '$', 'COP', '%', separadores "
-    "de miles ni unidades) en los campos de tipo number."
+    "de miles ni unidades) en los campos de tipo number.\n"
+    "- Estados financieros: los adjuntos suelen traer un balance o estado de "
+    "resultados. De ahí saca `monto_total_activos` (el TOTAL de activos, no un "
+    "rubro suelto ni el pasivo o el patrimonio) y "
+    "`beneficiario_ingresos_brutos_anuales` (ingresos brutos / operacionales / "
+    "ventas del año, antes de costos y deducciones; NO la utilidad). Si las "
+    "cifras vienen expresadas en miles o millones, conviértelas a pesos. Si el "
+    "balance cubre un periodo distinto de un año, no anualices: deja el campo en "
+    "null. Estas dos cifras determinan el tamaño del productor, así que es "
+    "preferible dejarlas vacías a arriesgar un valor equivocado.\n"
+    "- NO deduzcas `tipo_beneficiario` (pequeño/mediano/grande): lo calcula otro "
+    "paso con los umbrales oficiales. Extrae las cifras, no la conclusión."
 )
 
 
