@@ -15,10 +15,11 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from collections.abc import Iterator
 from contextlib import contextmanager
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any
 
 from ..logging_conf import get_logger
 from ..settings import get_settings
@@ -31,7 +32,8 @@ CREATE TABLE IF NOT EXISTS runs (
     id                INTEGER PRIMARY KEY AUTOINCREMENT,
     thread_id         TEXT NOT NULL,
     last_message_id   TEXT NOT NULL,
-    status            TEXT NOT NULL,            -- pending|extracted|incomplete|approved|generated|delivered|failed
+    -- pending|extracted|incomplete|approved|generated|delivered|failed
+    status            TEXT NOT NULL,
     subject           TEXT,
     sender            TEXT,
     sender_name       TEXT,
@@ -85,7 +87,7 @@ CREATE INDEX IF NOT EXISTS idx_runs_started ON runs(started_at DESC);
 
 
 def _now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 @contextmanager
@@ -201,7 +203,7 @@ def finish_run(run_id: int, status: str, error: str | None = None) -> None:
             try:
                 started = datetime.fromisoformat(row["started_at"])
                 duration_ms = int(
-                    (datetime.now(timezone.utc) - started).total_seconds() * 1000
+                    (datetime.now(UTC) - started).total_seconds() * 1000
                 )
             except Exception:  # noqa: BLE001
                 duration_ms = None

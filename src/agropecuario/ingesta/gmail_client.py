@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import base64
-from datetime import datetime, timezone
+from collections.abc import Iterable
+from datetime import UTC, datetime
 from email.utils import parseaddr
 from pathlib import Path
-from typing import Iterable
 
 from google.auth.exceptions import RefreshError
 from google.auth.transport.requests import Request
@@ -184,7 +184,7 @@ class GmailClient:
         sender_name, sender_email = parseaddr(headers.get("from", ""))
         recipients = [parseaddr(r)[1] for r in headers.get("to", "").split(",") if r]
         received_ts = int(raw.get("internalDate", "0")) / 1000
-        received_at = datetime.fromtimestamp(received_ts, tz=timezone.utc)
+        received_at = datetime.fromtimestamp(received_ts, tz=UTC)
 
         body_plain, body_html, attachments = self._walk_parts(
             raw["payload"], raw["id"], download_dir

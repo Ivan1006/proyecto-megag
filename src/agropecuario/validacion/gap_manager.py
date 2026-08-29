@@ -10,7 +10,11 @@ def build_result(
     validations: list[FieldValidation],
     rules: RuleSet,
 ) -> ValidationResult:
-    gaps = [_to_gap(v, rules) for v in validations if v.severity in ("error", "warning") and v.severity != "ok"]
+    gaps = [
+        _to_gap(v, rules)
+        for v in validations
+        if v.severity in ("error", "warning") and v.severity != "ok"
+    ]
     gaps = [g for g in gaps if g is not None]
 
     required_ok = sum(

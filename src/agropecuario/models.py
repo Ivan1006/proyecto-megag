@@ -7,14 +7,14 @@ entre nodos de LangGraph y garantiza validación en los bordes.
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import Any, Literal
 
 from pydantic import BaseModel, EmailStr, Field
 
 
-class ProjectStatus(str, Enum):
+class ProjectStatus(StrEnum):
     PENDING = "pending"
     EXTRACTED = "extracted"
     INCOMPLETE = "incomplete"

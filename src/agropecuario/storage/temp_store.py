@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 import sqlite3
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from ..models import ProjectRecord, ProjectStatus
@@ -37,7 +37,7 @@ class ProjectStore:
         self.conn.commit()
 
     def upsert(self, record: ProjectRecord) -> ProjectRecord:
-        record.updated_at = datetime.now(timezone.utc)
+        record.updated_at = datetime.now(UTC)
         payload = record.model_dump_json(exclude={"id", "message_id", "status", "error"})
         self.conn.execute(
             """
@@ -71,7 +71,7 @@ class ProjectStore:
         return self._row_to_record(row) if row else None
 
     def new_record(self, message_id: str) -> ProjectRecord:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         return ProjectRecord(
             id=str(uuid.uuid4()),
             message_id=message_id,

@@ -219,5 +219,5 @@ def _write_digit_fields(ws, fields: dict, digit_map: dict) -> None:
         else:
             s = s.ljust(longitud, "0")
         s = s[:len(celdas)]
-        for coord, digit in zip(celdas, s):
+        for coord, digit in zip(celdas, s, strict=False):
             _set(ws, coord, digit)
