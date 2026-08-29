@@ -216,9 +216,17 @@ def finish_run(run_id: int, status: str, error: str | None = None) -> None:
 
 
 def save_gaps(run_id: int, gaps: list[dict[str, Any]]) -> None:
-    if not gaps:
-        return
+    """Reemplaza las brechas del run (no las acumula).
+
+    Un run se reprocesa varias veces sobre la misma fila (la idempotencia es por
+    `thread_id + last_message_id`), así que insertar sin borrar dejaba la misma
+    brecha repetida una vez por intento. El borrado va FUERA del early-return: un
+    reproceso que resuelve todo debe dejar la lista vacía, no las brechas viejas.
+    """
     with connection() as conn:
+        conn.execute("DELETE FROM gaps WHERE run_id = ?", (run_id,))
+        if not gaps:
+            return
         conn.executemany(
             "INSERT INTO gaps(run_id, field_id, tipo, descripcion, sugerencia) "
             "VALUES(?, ?, ?, ?, ?)",
@@ -236,9 +244,11 @@ def save_gaps(run_id: int, gaps: list[dict[str, Any]]) -> None:
 
 
 def save_messages(run_id: int, messages: list[dict[str, Any]]) -> None:
-    if not messages:
-        return
+    """Reemplaza los mensajes del run (no los acumula). Ver `save_gaps`."""
     with connection() as conn:
+        conn.execute("DELETE FROM messages WHERE run_id = ?", (run_id,))
+        if not messages:
+            return
         conn.executemany(
             """INSERT INTO messages(run_id, message_id, sender, sender_name,
                                      subject, received_at, body_preview, attachments)
