@@ -14,6 +14,8 @@ cronológico) en un `EmailMessage` "virtual" listo para el extractor:
 
 from __future__ import annotations
 
+from collections.abc import Iterable
+
 from ..logging_conf import get_logger
 from ..models import Attachment, EmailMessage, EmailThread
 
@@ -94,9 +96,14 @@ def aggregate_thread(thread: EmailThread) -> tuple[EmailMessage, list[str]]:
     return virtual, contributing
 
 
-def _nombres_repetidos(by_key: dict[tuple[str, int], object]) -> set[str]:
-    """Nombres que aparecen con más de un tamaño (documentos distintos)."""
+def _nombres_repetidos(claves: Iterable[tuple[str, int]]) -> set[str]:
+    """Nombres que aparecen con más de un tamaño (documentos distintos).
+
+    Recibe solo las claves y no el dict entero: `dict` es invariante en el tipo
+    del valor, así que anotar el contenedor obligaba a que el llamador encajara
+    exactamente, y solo hacen falta las claves.
+    """
     vistos: dict[str, int] = {}
-    for nombre, _ in by_key:
+    for nombre, _ in claves:
         vistos[nombre] = vistos.get(nombre, 0) + 1
     return {n for n, veces in vistos.items() if veces > 1}
