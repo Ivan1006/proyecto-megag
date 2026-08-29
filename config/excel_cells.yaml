@@ -5,6 +5,24 @@
 version: 1
 hoja: "Hoja1"
 
+# ⚠️ Este archivo es el ADAPTADOR para UN template concreto: el formulario VIEJO
+# que hay en templates/credito_agro_template.xlsx. El día que llegue el formulario
+# vigente, lo que se reescribe es ESTE archivo, no el código ni rules.yaml.
+#
+# Extraer un campo que este template no sepa pintar es inofensivo: el writer lo
+# ignora y lo deja registrado en el log `excel.campos_sin_celda`. Por eso la
+# extracción (rules.yaml, guiada por el Manual) puede ir por delante del papel.
+#
+# Limitaciones conocidas de ESTE template frente al Manual vigente:
+#   - tipo_beneficiario: solo 3 casillas (F14/H14/J14) para los 4 segmentos del
+#     numeral 7.1; los dos de pequeño comparten F14.
+#   - No tiene: ingresos brutos anuales, LEC, flujo de caja / proyecciones del
+#     productor primario, ni el detalle de garantía FAG del formulario actual.
+template:
+  archivo: "templates/credito_agro_template.xlsx"
+  estado: "desactualizado — pendiente de reemplazo por el formulario vigente"
+
+
 # === SECCIÓN 1: Datos del intermediario y beneficiario ===
 campos:
   # Intermediario financiero
@@ -96,6 +114,27 @@ fag_cobertura_pct: N59       # N59:O59 (P59 contiene la etiqueta '%')
 
 # === Sección 10: NO se llena ===
 # La firma del funcionario verificador queda en blanco.
+
+# === Grupos de marcas (radio): valor del campo -> celda que lleva la "X" ===
+# Varios valores pueden apuntar a la misma celda cuando el template tiene menos
+# casillas que segmentos define el Manual. El día que el template traiga la
+# casilla que falta, se añade aquí una línea; no se toca Python.
+marcas:
+  tipo_beneficiario:
+    # Los 4 segmentos del Manual 7.1 sobre las 3 casillas de este template.
+    "pequeño productor de ingresos bajos": marca_beneficiario_pequeno
+    "pequeño productor": marca_beneficiario_pequeno
+    "mediano productor": marca_beneficiario_mediano
+    "gran productor": marca_beneficiario_grande
+    # Formas cortas heredadas (demo y correos redactados a mano).
+    "pequeño": marca_beneficiario_pequeno
+    "pequeno": marca_beneficiario_pequeno
+    "mediano": marca_beneficiario_mediano
+    "grande": marca_beneficiario_grande
+  tenencia:
+    "propia": marca_tenencia_propia
+    "arriendo": marca_tenencia_arriendo
+    "otra": marca_tenencia_otra
 
 # === Tipo de identificación del beneficiario ===
 # Cada fila representa una opción. Solo se marca la elegida.
