@@ -45,7 +45,7 @@ def render_excel(
     wb = load_workbook(str(output_path))
     ws = wb[cell_map["hoja"]]
 
-    _write_simple_fields(ws, fields, cell_map["campos"])
+    _write_simple_fields(ws, fields, cell_map)
     _write_id_beneficiario(ws, fields, cell_map.get("identificacion_beneficiario", {}))
     _write_text_blocks(ws, fields, cell_map)
     _write_section_4(ws, fields, cell_map)
@@ -56,8 +56,57 @@ def render_excel(
     # Sección 10 se deja en blanco intencionalmente.
 
     wb.save(str(output_path))
+
+    # Lo que se extrajo y este template no sabe recoger. No es un fallo: la
+    # extracción va por delante del papel a propósito, y esta lista es el
+    # inventario de lo que habría que mapear al pasar al formulario vigente.
+    huerfanos = campos_sin_celda(fields, cell_map)
+    if huerfanos:
+        logger.info(
+            "excel.campos_sin_celda",
+            campos=huerfanos,
+            template=cell_map.get("template", {}).get("archivo", str(template_path)),
+        )
+
     logger.info("excel.rendered", path=str(output_path))
     return output_path
+
+
+def campos_cubiertos(cell_map: dict) -> set[str]:
+    """IDs de campo que ESTE template sabe pintar, según su mapa de celdas.
+
+    Es el espejo de lo que consumen las funciones `_write_*`: si se añade un
+    bloque nuevo al writer, hay que declararlo aquí. Sirve para responder la
+    pregunta que importa al cambiar de formulario: *¿qué estamos extrayendo que
+    el papel todavía no recoge?*
+    """
+    cubiertos = {f for f in cell_map.get("campos", {}) if not f.startswith("marca_")}
+    cubiertos |= set(cell_map.get("marcas") or {})
+    cubiertos |= set(cell_map.get("campos_por_digito") or {})
+    if cell_map.get("identificacion_beneficiario"):
+        cubiertos |= {"beneficiario_id_tipo", "beneficiario_id_numero"}
+    cubiertos |= {
+        "forma_de_llegar",
+        "justificacion_tecnica",
+        "modalidad_pago_capital",
+        "modalidad_pago_intereses",
+        "cronograma_fecha_inicial",
+        "cronograma_fecha_final",
+        "actividad_economica_descripcion",
+        "fag_cobertura_pct",
+        "garantia_fag",
+        "actividades",
+    }
+    return cubiertos
+
+
+def campos_sin_celda(fields: dict[str, Any], cell_map: dict) -> list[str]:
+    """Campos CON valor que este template no puede mostrar (orden estable)."""
+    cubiertos = campos_cubiertos(cell_map)
+    return sorted(
+        f for f, v in fields.items()
+        if f not in cubiertos and v not in (None, "", [], {})
+    )
 
 
 # --- helpers ---------------------------------------------------------------
@@ -78,7 +127,8 @@ def _set(ws, coord: str, value: Any) -> None:
     cell.value = value
 
 
-def _write_simple_fields(ws, fields: dict, campos_map: dict) -> None:
+def _write_simple_fields(ws, fields: dict, cell_map: dict) -> None:
+    campos_map = cell_map["campos"]
     for field_id, coord in campos_map.items():
         if field_id.startswith("marca_"):
             # se manejan en _write_marks
@@ -86,24 +136,11 @@ def _write_simple_fields(ws, fields: dict, campos_map: dict) -> None:
         if field_id in fields:
             _set(ws, coord, fields[field_id])
 
-    # El manual define 4 segmentos y el formulario solo tiene 3 casillas: los dos
-    # de pequeño comparten F14. La clasificación fina se conserva en el campo.
-    _write_marks(ws, fields, campos_map, "tipo_beneficiario", {
-        "pequeño productor de ingresos bajos": "marca_beneficiario_pequeno",
-        "pequeño productor": "marca_beneficiario_pequeno",
-        "mediano productor": "marca_beneficiario_mediano",
-        "gran productor":    "marca_beneficiario_grande",
-        # Formas cortas heredadas (demo y correos redactados a mano).
-        "pequeño": "marca_beneficiario_pequeno",
-        "pequeno": "marca_beneficiario_pequeno",
-        "mediano": "marca_beneficiario_mediano",
-        "grande":  "marca_beneficiario_grande",
-    })
-    _write_marks(ws, fields, campos_map, "tenencia", {
-        "propia":   "marca_tenencia_propia",
-        "arriendo": "marca_tenencia_arriendo",
-        "otra":     "marca_tenencia_otra",
-    })
+    # Los grupos de marcas viven en `marcas:` del YAML, no aquí: así, cuando el
+    # template vigente traiga la casilla que a este le falta (p. ej. el cuarto
+    # segmento de productor), se añade una línea de config sin tocar código.
+    for field_id, options in (cell_map.get("marcas") or {}).items():
+        _write_marks(ws, fields, campos_map, field_id, options)
 
 
 def _write_marks(ws, fields: dict, campos_map: dict, field_id: str, options: dict) -> None:
