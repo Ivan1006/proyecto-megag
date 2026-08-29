@@ -68,6 +68,11 @@ target-version = "py311"
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "N"]
 
+[tool.ruff.lint.flake8-bugbear]
+# Typer declara los parámetros del CLI llamando a typer.Option/Argument en el
+# default del argumento: es su API, no el bug mutable que B008 persigue.
+extend-immutable-calls = ["typer.Option", "typer.Argument"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]

@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import mimetypes
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import typer
@@ -125,7 +125,7 @@ def extract_local(
         sender="test@local.dev",
         sender_name="Prueba local",
         subject="Prueba local de ingesta",
-        received_at=datetime.now(timezone.utc),
+        received_at=datetime.now(UTC),
         body_plain=body,
         attachments=attachments,
     )
@@ -152,7 +152,10 @@ def extract_local(
 
     settings = get_settings()
     if not settings.openai_api_key:
-        console.print("[red]Falta OPENAI_API_KEY en .env. Usa --no-llm para saltar este paso.[/red]")
+        console.print(
+            "[red]Falta OPENAI_API_KEY en .env. "
+            "Usa --no-llm para saltar este paso.[/red]"
+        )
         raise typer.Exit(code=1)
 
     rules = load_rules(settings.rules_path)

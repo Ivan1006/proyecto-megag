@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from agropecuario.models import EmailMessage, ProjectStatus
 
@@ -9,7 +9,7 @@ def test_email_message_minimal():
         thread_id="thr",
         sender="remit@example.com",
         subject="Proyecto",
-        received_at=datetime.now(timezone.utc),
+        received_at=datetime.now(UTC),
     )
     assert m.message_id == "abc"
     assert m.attachments == []

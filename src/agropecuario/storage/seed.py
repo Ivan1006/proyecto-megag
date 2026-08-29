@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import random
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from . import db
 
@@ -34,8 +34,10 @@ def run() -> None:
             "messages": [
                 ("msg-001a", "María Gómez Restrepo", "maria.gomez@cafedelaesperanza.co",
                  "Solicitud crédito agropecuario — Café",
-                 "Buenos días, adjunto los documentos para mi solicitud de crédito agropecuario. "
-                 "Quiero renovar 5 has de café variedad Castillo en la finca La Esperanza, Chinchiná.",
+                 "Buenos días, adjunto los documentos para mi solicitud de "
+                 "crédito agropecuario. "
+                 "Quiero renovar 5 has de café variedad Castillo en la "
+                 "finca La Esperanza, Chinchiná.",
                  ["RUT.pdf", "balance.xlsx", "carta_insumos.pdf"]),
                 ("msg-001b", "María Gómez Restrepo", "maria.gomez@cafedelaesperanza.co",
                  "Re: Solicitud crédito agropecuario — Café",
@@ -155,7 +157,7 @@ def run() -> None:
         },
     ]
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     for s in samples:
         started = now - timedelta(minutes=s["minutes_ago"])
         run_id = db.create_run(
