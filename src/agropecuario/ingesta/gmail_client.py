@@ -217,7 +217,7 @@ class GmailClient:
             body = part.get("body", {})
             if filename:
                 att_id = body.get("attachmentId")
-                if att_id:
+                if att_id and not _es_imagen_incrustada(part):
                     path = self._download_attachment(message_id, att_id, filename, download_dir)
                     attachments.append(
                         Attachment(
@@ -256,6 +256,29 @@ class GmailClient:
         path = download_dir / f"{message_id}__{filename}"
         path.write_bytes(data)
         return path
+
+
+def _es_imagen_incrustada(part: dict) -> bool:
+    """`True` si la parte es una imagen incrustada en el cuerpo, no un adjunto real.
+
+    Los logos de firma y las imágenes del HTML llegan como partes con `filename`
+    (image001.png), así que sin este filtro se descargaban, se les pasaba OCR y su
+    ruido acababa en el prompt del mapper. Se identifican por `Content-Disposition:
+    inline` o por tener `Content-ID` (que es como el HTML las referencia).
+
+    Solo se descartan IMÁGENES: un PDF marcado inline sigue siendo un documento
+    que puede traer datos del crédito.
+    """
+    if not part.get("mimeType", "").lower().startswith("image/"):
+        return False
+    for h in part.get("headers", []) or []:
+        nombre = h.get("name", "").lower()
+        valor = h.get("value", "").lower()
+        if nombre == "content-disposition" and valor.startswith("inline"):
+            return True
+        if nombre == "content-id":
+            return True
+    return False
 
 
 def _b64(data: str) -> str:

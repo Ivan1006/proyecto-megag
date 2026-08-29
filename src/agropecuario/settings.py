@@ -65,6 +65,13 @@ class Settings(BaseSettings):
     rules_path: Path = Field(default=Path("./config/rules.yaml"), alias="RULES_PATH")
     template_path: Path = Field(default=Path("./config/template.yaml"), alias="TEMPLATE_PATH")
 
+    # Límites del texto que se manda al LLM. El contexto de gpt-4o son ~128k
+    # tokens (~500k caracteres): sin tope, un hilo con varios PDF largos lo
+    # revienta y el run falla entero. Se cuenta en caracteres, no en tokens, para
+    # no depender del tokenizador.
+    max_chars_por_adjunto: int = Field(default=50_000, alias="MAX_CHARS_POR_ADJUNTO")
+    max_chars_total: int = Field(default=200_000, alias="MAX_CHARS_TOTAL")
+
     # Manual de servicios Finagro (RAG): PDF fuente + índice vectorial construido.
     manual_pdf_path: Path = Field(
         default=Path("./config/manual_servicios.pdf"), alias="MANUAL_PDF_PATH"

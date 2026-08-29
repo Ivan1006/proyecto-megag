@@ -45,21 +45,36 @@ def aggregate_thread(thread: EmailThread) -> tuple[EmailMessage, list[str]]:
 
     combined_body = "\n".join(parts).strip()
 
-    # Dedupe de adjuntos: el más reciente con el mismo filename gana.
-    by_name: dict[str, tuple[int, Attachment]] = {}
+    # Dedupe de adjuntos: gana el más reciente con el mismo nombre Y tamaño.
+    #
+    # El tamaño es lo que evita perder documentos: con solo el nombre, dos
+    # adjuntos distintos que se llamen igual —"balance.pdf" de dos socios,
+    # "escaneado.pdf" de dos correos— se pisaban y uno desaparecía sin rastro.
+    # Si difieren en bytes son documentos distintos y se conservan los dos; si
+    # coinciden es el mismo archivo reenviado y basta con el último.
+    by_key: dict[tuple[str, int], tuple[int, Attachment]] = {}
     for idx, m in enumerate(msgs):
         for att in m.attachments:
-            prev = by_name.get(att.filename)
+            key = (att.filename, att.size_bytes)
+            prev = by_key.get(key)
             if prev is None or idx > prev[0]:
-                by_name[att.filename] = (idx, att)
+                by_key[key] = (idx, att)
 
-    deduped = [a for _, a in by_name.values()]
-    if len(deduped) != sum(len(m.attachments) for m in msgs):
+    deduped = [a for _, a in by_key.values()]
+    entrada = sum(len(m.attachments) for m in msgs)
+    if len(deduped) != entrada:
         logger.info(
             "aggregator.attachments_deduped",
-            input=sum(len(m.attachments) for m in msgs),
+            input=entrada,
             output=len(deduped),
+            conservados=[a.filename for a in deduped],
         )
+
+    # Mismo nombre y distinto tamaño: se conservan ambos, pero conviene avisar
+    # porque al analista le va a extrañar ver el archivo dos veces.
+    repetidos = sorted(_nombres_repetidos(by_key))
+    if repetidos:
+        logger.info("aggregator.mismo_nombre_distinto_contenido", nombres=repetidos)
 
     virtual = EmailMessage(
         message_id=last.message_id,
@@ -77,3 +92,11 @@ def aggregate_thread(thread: EmailThread) -> tuple[EmailMessage, list[str]]:
 
     contributing = [m.message_id for m in msgs]
     return virtual, contributing
+
+
+def _nombres_repetidos(by_key: dict[tuple[str, int], object]) -> set[str]:
+    """Nombres que aparecen con más de un tamaño (documentos distintos)."""
+    vistos: dict[str, int] = {}
+    for nombre, _ in by_key:
+        vistos[nombre] = vistos.get(nombre, 0) + 1
+    return {n for n, veces in vistos.items() if veces > 1}
