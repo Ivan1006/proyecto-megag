@@ -226,9 +226,11 @@ def _entregables(sample: dict) -> dict[str, str | None]:
     out_dir = get_settings().output_dir / sample["thread_id"]
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    excel: Path | None = out_dir / "solicitud_credito.xlsx"
+    destino = out_dir / "solicitud_credito.xlsx"
+    excel: Path | None
     try:
-        render_excel(sample["fields"], excel)
+        render_excel(sample["fields"], destino)
+        excel = destino
     except Exception as e:  # noqa: BLE001
         logger.warning("seed.excel_failed", thread=sample["thread_id"], error=str(e))
         excel = None
