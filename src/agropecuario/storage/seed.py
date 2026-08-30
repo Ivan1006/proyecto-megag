@@ -4,8 +4,13 @@ from __future__ import annotations
 
 import random
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 
+from ..logging_conf import get_logger
+from ..settings import get_settings
 from . import db
+
+logger = get_logger(__name__)
 
 
 def run() -> None:
@@ -181,12 +186,7 @@ def run() -> None:
             completitud_opt=s["completitud_opt"],
             aprobado=s["aprobado"],
             error=s.get("error"),
-            excel_path=f"./data/output/{s['thread_id']}/solicitud_credito.xlsx"
-            if s["status"] == "generated"
-            else None,
-            pdf_path=f"./data/output/{s['thread_id']}/solicitud_credito.pdf"
-            if s["status"] == "generated"
-            else None,
+            **_entregables(s),
         )
         msgs = []
         base = started - timedelta(minutes=60)
@@ -202,6 +202,49 @@ def run() -> None:
             })
         db.save_messages(run_id, msgs)
         db.save_gaps(run_id, s.get("gaps", []))
+
+
+def _entregables(sample: dict) -> dict[str, str | None]:
+    """Genera los entregables del run de demo y devuelve solo las rutas REALES.
+
+    Antes se guardaba la ruta a `data/output/<thread>/solicitud_credito.xlsx` sin
+    crear el archivo: el dashboard ofrecía la descarga y siempre respondía
+    "No hay excel para este run". Una demo que promete lo que no puede cumplir es
+    peor que una sin descarga.
+
+    Ahora se rellena el formulario de verdad con los campos del propio sample, y
+    la ruta se guarda **solo si el archivo quedó en disco**. El PDF depende de
+    LibreOffice, así que degrada igual que en el `runner`: si no está, se guarda
+    el Excel y `pdf_path` queda en None.
+    """
+    if sample["status"] != "generated":
+        return {"excel_path": None, "pdf_path": None}
+
+    from ..generacion.excel_writer import render_excel
+    from ..generacion.pdf_writer import render_pdf
+
+    out_dir = get_settings().output_dir / sample["thread_id"]
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    excel: Path | None = out_dir / "solicitud_credito.xlsx"
+    try:
+        render_excel(sample["fields"], excel)
+    except Exception as e:  # noqa: BLE001
+        logger.warning("seed.excel_failed", thread=sample["thread_id"], error=str(e))
+        excel = None
+
+    pdf: Path | None = None
+    if excel is not None:
+        try:
+            pdf = render_pdf(excel, out_dir / "solicitud_credito.pdf")
+        except Exception as e:  # noqa: BLE001
+            logger.warning("seed.pdf_failed", thread=sample["thread_id"], error=str(e))
+            pdf = None
+
+    return {
+        "excel_path": str(excel) if excel and excel.exists() else None,
+        "pdf_path": str(pdf) if pdf and pdf.exists() else None,
+    }
 
 
 if __name__ == "__main__":
