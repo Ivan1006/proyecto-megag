@@ -205,3 +205,77 @@ def test_enricher_no_muta_el_dict_de_entrada_al_clasificar():
     }
     enrich_fields(fields, defaults={}, resolver=None)
     assert "tipo_beneficiario" not in fields
+
+
+# --- periodo de los estados financieros (Manual p.15, num. 7a) -------------
+
+def test_enricher_no_clasifica_con_un_acumulado_parcial():
+    """Regresión del bug real: un semestre no puede pasar por año.
+
+    Llegó un 'estado de resultado integral acumulado a 30 de junio' y los
+    120.156.226.098 del semestre se clasificaron como si fueran anuales. Ahora la
+    fecha de corte lo delata y no se clasifica.
+    """
+    fields = {
+        "beneficiario_ingresos_brutos_anuales": 120_156_226_098,
+        "monto_total_activos": 500_000_000,
+        "fecha_balance_dia": 30,
+        "fecha_balance_mes": 6,
+        "fecha_balance_anio": 2026,
+        "actividades": [],
+    }
+    out = enrich_fields(fields, defaults={}, resolver=None, today=date(2026, 8, 31))
+    assert "tipo_beneficiario" not in out
+
+
+def test_enricher_clasifica_con_un_cierre_anual():
+    fields = {
+        "beneficiario_ingresos_brutos_anuales": 3_000_000_000,
+        "monto_total_activos": 100_000_000,
+        "fecha_balance_dia": 31,
+        "fecha_balance_mes": 12,
+        "fecha_balance_anio": 2025,
+        "actividades": [],
+    }
+    out = enrich_fields(fields, defaults={}, resolver=None, today=date(2026, 8, 31))
+    assert out["tipo_beneficiario"] == "mediano productor"
+
+
+def test_enricher_no_clasifica_con_un_cierre_demasiado_viejo():
+    """El manual solo admite el último o el penúltimo periodo."""
+    fields = {
+        "beneficiario_ingresos_brutos_anuales": 3_000_000_000,
+        "monto_total_activos": 100_000_000,
+        "fecha_balance_dia": 31,
+        "fecha_balance_mes": 12,
+        "fecha_balance_anio": 2022,
+        "actividades": [],
+    }
+    out = enrich_fields(fields, defaults={}, resolver=None, today=date(2026, 8, 31))
+    assert "tipo_beneficiario" not in out
+
+
+def test_enricher_respeta_el_correo_si_el_periodo_no_sirve():
+    """No se clasifica, pero tampoco se borra lo que dijera el remitente."""
+    fields = {
+        "tipo_beneficiario": "pequeño",
+        "beneficiario_ingresos_brutos_anuales": 120_156_226_098,
+        "monto_total_activos": 500_000_000,
+        "fecha_balance_dia": 30,
+        "fecha_balance_mes": 6,
+        "fecha_balance_anio": 2026,
+        "actividades": [],
+    }
+    out = enrich_fields(fields, defaults={}, resolver=None, today=date(2026, 8, 31))
+    assert out["tipo_beneficiario"] == "pequeño"
+
+
+def test_enricher_clasifica_igual_si_el_periodo_es_desconocido():
+    """Decisión del usuario: sin fecha de corte se clasifica y se avisa aparte."""
+    fields = {
+        "beneficiario_ingresos_brutos_anuales": 3_000_000_000,
+        "monto_total_activos": 100_000_000,
+        "actividades": [],
+    }
+    out = enrich_fields(fields, defaults={}, resolver=None, today=date(2026, 8, 31))
+    assert out["tipo_beneficiario"] == "mediano productor"

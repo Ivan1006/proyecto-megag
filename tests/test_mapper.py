@@ -98,3 +98,25 @@ def test_map_json_no_objeto_devuelve_vacio():
     chat, _ = _capturing_chat(json.dumps([1, 2, 3]))
     result = map_content_to_fields("x", _rules(), chat=chat)
     assert result == {}
+
+
+# --- periodo de los estados financieros: hechos, no decisiones -------------
+
+
+def test_schema_pide_los_meses_cubiertos_del_estado_de_resultados():
+    """El hecho con el que el código decide si el periodo es cerrado."""
+    schema = _build_schema_description(_rules())
+    assert "estados_financieros_meses_cubiertos" in schema
+    assert "fecha_balance_anio" in schema
+
+
+def test_el_prompt_no_le_pide_al_llm_descartar_cifras_por_el_periodo():
+    """El bug real: se le pidió una DECISIÓN ('deja el campo en null') y falló.
+
+    Ahora transcribe las cifras y la fecha de corte; el periodo lo juzga
+    `clasificacion/periodo.py`.
+    """
+    from agropecuario.generacion.mapper import SYSTEM_PROMPT
+
+    assert "NUNCA anualices" in SYSTEM_PROMPT
+    assert "no anualices: deja el campo en null" not in SYSTEM_PROMPT

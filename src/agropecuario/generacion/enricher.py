@@ -64,9 +64,10 @@ def enrich_fields(
     beneficiario = merged.get("beneficiario_razon_social")
     merged["actividades"] = _resolve_codes(actividades, resolver, contexto_web, beneficiario)
 
+    hoy = today or date.today()
     _set_actividad_economica_codigo(merged)
-    _set_tamano_productor(merged)
-    _ensure_cronograma(merged, today or date.today())
+    _set_tamano_productor(merged, hoy)
+    _ensure_cronograma(merged, hoy)
 
     for detalle in validate_sumas(merged["actividades"]):
         logger.warning("enricher.suma_inconsistente", detalle=detalle)
@@ -151,36 +152,66 @@ def _set_actividad_economica_codigo(fields: dict[str, Any]) -> None:
 
 # --- sección 1: tamaño del productor ---------------------------------------
 
-def _set_tamano_productor(fields: dict[str, Any]) -> None:
+def _set_tamano_productor(fields: dict[str, Any], hoy: date) -> None:
     """Clasifica al beneficiario con la regla determinística del Manual 7.1.
 
     Las cifras salen de los estados financieros que vienen adjuntos al correo. Si
     faltan, `clasificar()` devuelve `None` y se respeta lo que el correo dijera
     (que puede no ser nada): no se inventa un tamaño.
 
+    Antes de clasificar se comprueba el **periodo** (Manual p.15, num. 7a): las
+    cifras deben salir del último o penúltimo periodo CERRADO. Un acumulado a
+    mitad de año subestima los ingresos —a la mitad, en el caso real que motivó
+    esto— y cerca de un umbral eso baja un segmento entero, así que ahí no se
+    clasifica. El aviso accionable para el remitente lo arma
+    `clasificacion.periodo.gap_por_periodo()` en el `runner`.
+
     Cuando sí se puede calcular, **el cálculo manda** sobre lo que afirmara el
     correo, porque los estados financieros son evidencia más dura que la
     redacción del solicitante. Si discrepan se deja constancia en el log.
     """
+    from ..clasificacion.periodo import periodo_de_campos
     from ..clasificacion.tamano_productor import clasificar
 
     declarado = fields.get("tipo_beneficiario")
     try:
+        periodo = periodo_de_campos(fields, hoy=hoy)
         resultado = clasificar(
             fields.get("beneficiario_ingresos_brutos_anuales"),
             fields.get("monto_total_activos"),
+            periodo=periodo,
         )
     except Exception as e:  # noqa: BLE001
         logger.warning("enricher.tamano_productor_failed", error=str(e))
         return
 
     if resultado is None:
-        logger.info(
-            "enricher.tamano_no_calculable",
-            motivo="faltan ingresos brutos anuales y/o activos totales",
-            declarado=declarado,
+        # El orden importa para el log: si faltan las cifras, el periodo es
+        # irrelevante y decir "periodo no cerrado" despistaría a quien lo lea.
+        faltan_cifras = (
+            fields.get("beneficiario_ingresos_brutos_anuales") is None
+            or fields.get("monto_total_activos") is None
         )
+        if faltan_cifras:
+            logger.info(
+                "enricher.tamano_no_calculable",
+                motivo="faltan ingresos brutos anuales y/o activos totales",
+                declarado=declarado,
+            )
+        else:
+            logger.warning(
+                "enricher.tamano_periodo_no_cerrado",
+                estado=periodo.estado.value,
+                motivo=periodo.motivo,
+                declarado=declarado,
+            )
         return
+
+    if not periodo.confirmado:
+        logger.warning(
+            "enricher.tamano_periodo_sin_confirmar",
+            motivo=periodo.motivo,
+        )
 
     fields["tipo_beneficiario"] = resultado.tamano.value
     logger.info(
