@@ -12,7 +12,7 @@ dependencies = [
     # Modelos de datos
     "pydantic[email]>=2.6",
     "pydantic-settings>=2.2",
-    # Gmail / Google Drive
+    # Gmail
     "google-api-python-client>=2.120",
     "google-auth>=2.28",
     "google-auth-oauthlib>=1.2",

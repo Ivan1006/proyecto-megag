@@ -1,1 +1,1 @@
-"""Persistencia local (SQLite) y Google Drive."""
+"""Persistencia local: SQLite, seed de demo y almacén temporal de adjuntos."""

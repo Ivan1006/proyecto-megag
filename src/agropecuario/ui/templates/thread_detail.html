@@ -90,14 +90,6 @@
         <li><a href="/threads/{{ run.id }}/download/pdf"
                class="text-emerald-700 hover:underline">📄 Descargar PDF</a></li>
         {% endif %}
-        {% if run.drive_excel_url %}
-        <li><a href="{{ run.drive_excel_url }}" target="_blank"
-               class="text-emerald-700 hover:underline">↗ Drive (Excel)</a></li>
-        {% endif %}
-        {% if run.drive_pdf_url %}
-        <li><a href="{{ run.drive_pdf_url }}" target="_blank"
-               class="text-emerald-700 hover:underline">↗ Drive (PDF)</a></li>
-        {% endif %}
       </ul>
       {% else %}
       <p class="text-sm text-slate-500">Sin entregables aún.</p>

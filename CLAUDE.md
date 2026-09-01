@@ -1,7 +1,8 @@
 # CLAUDE.md — proyecto MegaG
 
 Agente multi-etapa que convierte hilos de Gmail en la **Solicitud de Crédito
-Agropecuario Finagro / Bancolombia** rellenada (Excel + PDF) y la deja en Drive.
+Agropecuario Finagro / Bancolombia** rellenada (Excel + PDF) y la deja en
+`data/output/<thread_id>/`. La entrega (correo o NAS) está sin definir.
 
 ---
 
@@ -41,7 +42,7 @@ Antes de terminar, actualiza en el vault:
 ## Stack (resumen)
 
 Python 3.11+ · LangGraph + LangChain · OpenAI (GPT-4o / 4o-mini) ·
-Gmail + Drive API · Pydantic v2 · openpyxl · LibreOffice headless ·
+Gmail API · Pydantic v2 · openpyxl · LibreOffice headless ·
 SQLite · FastAPI + Jinja + HTMX · Typer · structlog.
 
 ---
@@ -183,7 +184,7 @@ hooks: nada se ejecuta solo, no compiten con las rutinas del vault). Úsalos baj
 demanda; no son obligatorios para ninguna tarea.
 
 - Agentes útiles aquí: `python-reviewer`, `fastapi-reviewer` (dashboard),
-  `security-reviewer` (sobre todo lo que toque `secrets/`, Gmail o Drive),
+  `security-reviewer` (sobre todo lo que toque `secrets/` o Gmail),
   `database-reviewer` (SQLite), `code-reviewer`, `silent-failure-hunter`.
 - Comandos: `/plan`, `/code-review`, `/python-review`, `/fastapi-review`,
   `/security-scan`, `/test-coverage`, `/refactor-clean`, `/build-fix`.

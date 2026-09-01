@@ -9,7 +9,7 @@ El analista solo aplica la etiqueta `bot` a un hilo de correo. El sistema:
 3. Extrae los campos del formulario con LLM.
 4. Valida contra reglas de negocio (`config/rules.yaml`).
 5. Si faltan datos → redacta y responde al remitente pidiendo lo que falta.
-6. Si está completo → genera el Excel + PDF del proyecto y los sube a Drive.
+6. Si está completo → genera el Excel + PDF del proyecto en `data/output/<thread_id>/`.
 7. Etiqueta el hilo como `bot-procesado` para evitar reproceso.
 
 Toda la trazabilidad queda persistida en SQLite y visible en un **dashboard web**.
@@ -36,13 +36,15 @@ Toda la trazabilidad queda persistida en SQLite y visible en un **dashboard web*
 ### Dashboard web (FastAPI + Jinja + HTMX + Tailwind)
 - **`/`** — KPIs clicables (Generados, Pendientes, Incompletos, Fallidos) y últimos runs.
 - **`/threads`** — Tabla filtrable por estado / avance / cerrados; los runs `failed` muestran preview + tooltip del error.
-- **`/threads/{id}`** — Detalle con banner de error prominente cuando falla, timeline cronológico de mensajes con adjuntos, brechas detectadas, campos extraídos, y descargas Excel/PDF/Drive.
+- **`/threads/{id}`** — Detalle con banner de error prominente cuando falla, timeline cronológico de mensajes con adjuntos, brechas detectadas, campos extraídos, y descargas del Excel y el PDF.
 - Acciones: reprocesar hilo, cerrar/reabrir run, descargar entregables.
 
 ### Generación de entregables
 - Excel: rellenado del template oficial por mapeo `campo → celda` (`config/excel_cells.yaml`).
 - PDF: conversión vía LibreOffice headless.
-- Subida automática a Google Drive.
+- Los entregables quedan en `data/output/<thread_id>/`. **No se suben a ningún
+  lado**: Google Drive se descartó y la entrega definitiva (correo o una ruta de
+  NAS) está sin definir.
 
 ---
 
@@ -70,7 +72,7 @@ Toda la trazabilidad queda persistida en SQLite y visible en un **dashboard web*
                                  ▼                  ▼
                  ┌──────────────────────┐  ┌─────────────────────┐
                  │ Reply al remitente   │  │ Mapper → Excel/PDF  │
-                 │ pidiendo info        │  │ → Drive             │
+                 │ pidiendo info        │  │ → data/output/      │
                  └──────────────────────┘  └─────────────────────┘
                                  │                  │
                                  └────────┬─────────┘
@@ -91,7 +93,7 @@ Diagrama completo en `arquitectura_agropecuario.drawio`.
 | Lenguaje | Python 3.11+ |
 | Orquestación | LangGraph + LangChain |
 | LLM | OpenAI (GPT-4o / GPT-4o-mini) |
-| Email / Drive | Gmail API + Google Drive API |
+| Email | Gmail API |
 | Datos | Pydantic v2, SQLite |
 | Generación | openpyxl (Excel), LibreOffice (PDF), Jinja2 |
 | Web UI | FastAPI + Jinja2 + HTMX + Tailwind CDN |
@@ -104,7 +106,7 @@ Diagrama completo en `arquitectura_agropecuario.drawio`.
 ### Requisitos
 - Python ≥ 3.11
 - LibreOffice (para conversión PDF) — `sudo pacman -S libreoffice-still` / `apt install libreoffice`
-- Credenciales OAuth de Google Cloud Console con scopes Gmail + Drive
+- Credenciales OAuth de Google Cloud Console con scope `gmail.modify`
 
 ### Setup
 
@@ -135,7 +137,7 @@ agropecuario db-init
 ### CLI
 
 ```bash
-# Autenticar Gmail/Drive (primera vez — abre navegador)
+# Autenticar Gmail (primera vez — abre navegador)
 agropecuario auth
 
 # Procesar un hilo específico
@@ -173,7 +175,7 @@ proyecto-megag/
 │   ├── ingesta/         # Gmail client, aggregator, parsers (PDF/Excel/Word/imágenes)
 │   ├── validacion/      # Rule engine, validator, gap manager
 │   ├── generacion/      # Mapper, enricher, Excel/PDF writers
-│   ├── storage/         # SQLite (db.py), Drive client, seed
+│   ├── storage/         # SQLite (db.py), seed de demo, almacén temporal
 │   ├── ui/              # FastAPI dashboard + templates
 │   ├── orchestrator.py  # Grafo LangGraph
 │   ├── runner.py        # Orquestador por hilo (label trigger)
@@ -216,7 +218,6 @@ Variables clave:
 | `OPENAI_API_KEY` | API key de OpenAI |
 | `OPENAI_MODEL` | Modelo principal (default `gpt-4o`) |
 | `GOOGLE_CLIENT_SECRETS` | Ruta al `client_secret.json` |
-| `DRIVE_OUTPUT_FOLDER_ID` | Carpeta Drive donde se suben entregables |
 | `GMAIL_LABEL_TRIGGER` | Etiqueta que dispara el bot (default `bot`) |
 | `GMAIL_LABEL_DONE` | Etiqueta para marcar procesados (default `bot-procesado`) |
 | `DB_PATH` | Ruta a la SQLite local |

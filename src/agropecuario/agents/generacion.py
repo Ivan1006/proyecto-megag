@@ -2,8 +2,12 @@
 
 Consolida los campos extraídos (defaults + códigos de la sección 5 vía
 `code_resolver` + cronograma) con el `enricher` y renderiza los entregables
-oficiales Bancolombia/Finagro: Excel rellenado celda a celda y su PDF.
-Opcionalmente los sube a Drive.
+oficiales Bancolombia/Finagro: Excel rellenado celda a celda y su PDF, que
+quedan en `data/output/<message_id>/`.
+
+La entrega de los entregables está **sin definir** (será por correo o a una ruta
+de un NAS); hasta entonces la única copia vive en el disco de la máquina que los
+generó. Ver [[Tareas pendientes]] del vault.
 """
 
 from __future__ import annotations
@@ -16,13 +20,12 @@ from ..generacion.pdf_writer import render_pdf
 from ..logging_conf import get_logger
 from ..models import GeneratedOutputs, ProjectStatus
 from ..settings import get_settings
-from ..storage.drive_client import DriveClient
 from .state import GraphState
 
 logger = get_logger(__name__)
 
 
-def make_generacion_node(drive: DriveClient | None = None):
+def make_generacion_node():
     settings = get_settings()
 
     def node(state: GraphState) -> GraphState:
@@ -39,14 +42,6 @@ def make_generacion_node(drive: DriveClient | None = None):
         logger.info("agent.generacion.rendered", pdf=str(pdf_path), xlsx=str(excel_path))
 
         outputs = GeneratedOutputs(pdf_path=pdf_path, excel_path=excel_path)
-
-        if drive is not None:
-            try:
-                if pdf_path is not None:
-                    outputs.drive_pdf_url = drive.upload(pdf_path)
-                outputs.drive_excel_url = drive.upload(excel_path)
-            except Exception as e:  # noqa: BLE001
-                logger.warning("agent.generacion.drive_upload_failed", error=str(e))
 
         return {
             **state,

@@ -49,11 +49,11 @@ Estado: **producción interna**. Procesa hilos reales bajo supervisión humana (
 
 ### 6. Storage
 - **`storage/db.py`**: SQLite con 3 tablas:
-  - `runs(id, thread_id, last_message_id, status, started_at, finished_at, error, fields_json, excel_path, pdf_path, drive_excel_url, drive_pdf_url, subject, sender, completitud_req, completitud_opt, aprobado, closed)`
+  - `runs(id, thread_id, last_message_id, status, started_at, finished_at, error, fields_json, excel_path, pdf_path, subject, sender, completitud_req, completitud_opt, aprobado, closed, discrepancia_correo_web, web_actividad_resumen, web_fuentes_json)`
   - `gaps(id, run_id, field_id, descripcion, tipo, sugerencia)`
   - `messages(id, run_id, message_id, received_at, sender, sender_name, subject, body_preview, attachments)`
 - **Idempotencia**: clave compuesta `(thread_id, last_message_id)`. Reprocesar el mismo estado reusa el run; un correo nuevo crea uno nuevo.
-- **`drive_client.py`**: sube Excel + PDF a `DRIVE_OUTPUT_FOLDER_ID`, devuelve URLs.
+- **Sin almacenamiento remoto**: los entregables viven solo en `data/output/<thread_id>/` y la BD guarda la **ruta**, no el archivo. Google Drive se descartó (2026-08-29); la entrega definitiva —correo o una ruta de NAS— está sin definir.
 
 ### 7. Dashboard — FastAPI
 - **Módulo**: `agropecuario/ui/app.py`
@@ -99,11 +99,9 @@ Estado: **producción interna**. Procesa hilos reales bajo supervisión humana (
                  │              │  generated  │
                  │              └──────┬──────┘
                  │                     │
-                 │              upload to Drive
-                 │                     │
-                 │              ┌──────▼──────┐
-                 │              │  delivered  │
-                 │              └─────────────┘
+                 │              (entregables en
+                 │               data/output/ — sin
+                 │               copia remota)
                  │
                  ▼
           (espera respuesta del cliente — nuevo correo creará nuevo run)

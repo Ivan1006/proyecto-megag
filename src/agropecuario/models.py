@@ -147,8 +147,6 @@ class ProjectData(BaseModel):
 class GeneratedOutputs(BaseModel):
     pdf_path: Path | None = None
     excel_path: Path | None = None
-    drive_pdf_url: str | None = None
-    drive_excel_url: str | None = None
     generated_at: datetime = Field(default_factory=datetime.utcnow)
 
 
