@@ -109,18 +109,7 @@ def process_thread(
                 completitud_opt=result.completitud_opcionales,
                 aprobado=result.aprobado,
             )
-            db.save_gaps(
-                run_id,
-                [
-                    {
-                        "field_id": g.field_id,
-                        "tipo": g.tipo,
-                        "descripcion": g.descripcion,
-                        "sugerencia": g.sugerencia,
-                    }
-                    for g in result.gaps
-                ],
-            )
+            db.save_gaps(run_id, _gaps_para_persistir(result, fields))
             aprobado = result.aprobado
             if not aprobado:
                 db.update_run(run_id, status="incomplete")
@@ -151,6 +140,36 @@ def process_thread(
         logger.error("runner.failed", thread_id=thread_id, error=str(e))
         db.finish_run(run_id, status="failed", error=str(e))
         return run_id
+
+
+def _gaps_para_persistir(result, fields: dict[str, Any]) -> list[dict[str, Any]]:
+    """Brechas de la validación + la del periodo de los estados financieros.
+
+    La del periodo no sale del `RuleSet`: no es un campo ausente sino una
+    condición que deben cumplir dos campos presentes (Manual p.15, num. 7a), y
+    `validate_fields` solo sabe mirar campo a campo. Se añade aquí, donde ya
+    están todas juntas, porque `save_gaps` REEMPLAZA la lista del run.
+    """
+    from .clasificacion.periodo import gap_por_periodo
+
+    gaps = list(result.gaps)
+    periodo_gap = gap_por_periodo(fields)
+    if periodo_gap is not None:
+        gaps.append(periodo_gap)
+        logger.warning(
+            "runner.periodo_estados_financieros",
+            descripcion=periodo_gap.descripcion,
+            sugerencia=periodo_gap.sugerencia,
+        )
+    return [
+        {
+            "field_id": g.field_id,
+            "tipo": g.tipo,
+            "descripcion": g.descripcion,
+            "sugerencia": g.sugerencia,
+        }
+        for g in gaps
+    ]
 
 
 def _investigar_web(run_id: int, fields: dict[str, Any]):

@@ -5,6 +5,13 @@ aquí viven las clasificaciones que el Manual de Servicios define sobre la perso
 o empresa que pide el crédito.
 """
 
+from .periodo import (
+    EstadoPeriodo,
+    Periodo,
+    evaluar_periodo,
+    gap_por_periodo,
+    periodo_de_campos,
+)
 from .tamano_productor import (
     Clasificacion,
     TamanoProductor,
@@ -12,4 +19,14 @@ from .tamano_productor import (
     load_config,
 )
 
-__all__ = ["Clasificacion", "TamanoProductor", "clasificar", "load_config"]
+__all__ = [
+    "Clasificacion",
+    "EstadoPeriodo",
+    "Periodo",
+    "TamanoProductor",
+    "clasificar",
+    "evaluar_periodo",
+    "gap_por_periodo",
+    "load_config",
+    "periodo_de_campos",
+]

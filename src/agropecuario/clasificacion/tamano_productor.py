@@ -41,6 +41,7 @@ from typing import Any
 import yaml
 
 from ..logging_conf import get_logger
+from .periodo import Periodo
 
 logger = get_logger(__name__)
 
@@ -65,6 +66,10 @@ class Clasificacion:
     ingresos_uvb: float
     activos_uvb: float
     motivo: str  # regla concreta que decidió, para auditar el formulario
+    # Periodo del que salieron las cifras (Manual p.15, num. 7a). Se conserva
+    # para poder auditar el formulario: una clasificación sobre un periodo sin
+    # confirmar no vale lo mismo que una sobre un cierre.
+    periodo: Periodo | None = None
 
     @property
     def marca_formulario(self) -> str:
@@ -90,6 +95,7 @@ def clasificar(
     *,
     valor_tierra: float = 0.0,
     es_reforma_agraria: bool = False,
+    periodo: Periodo | None = None,
     config: dict[str, Any] | None = None,
 ) -> Clasificacion | None:
     """Clasifica al productor. Devuelve `None` si faltan datos para decidir.
@@ -99,9 +105,18 @@ def clasificar(
     no traía los estados financieros y la clasificación no se puede calcular —
     quien llama decide qué hacer (el `enricher` respeta lo que dijera el correo).
 
+    `periodo` es el veredicto de `clasificacion.periodo`: si las cifras no salen
+    de un periodo cerrado (un acumulado a junio, un cierre más viejo que el
+    penúltimo), esto devuelve `None` en vez de clasificar sobre una base
+    equivocada — el manual (p.15, num. 7a) exige el último o penúltimo periodo
+    cerrado. Sin `periodo` no se aplica esa puerta, para no romper llamadas que
+    ya validaron el periodo por su cuenta.
+
     `config=None` carga `config/tamano_productor.yaml`; se inyecta en los tests.
     """
     if ingresos_brutos_anuales is None or activos_totales is None:
+        return None
+    if periodo is not None and not periodo.clasifica:
         return None
 
     cfg = config if config is not None else load_config()
@@ -126,6 +141,7 @@ def clasificar(
             ingresos_uvb=round(ingresos_uvb, 2),
             activos_uvb=round(activos_uvb, 2),
             motivo=motivo,
+            periodo=periodo,
         )
 
     # De mayor a menor. En cada escalón ya se sabe que los cortes de arriba no se

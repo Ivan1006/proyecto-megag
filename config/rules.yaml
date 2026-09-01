@@ -157,12 +157,27 @@ campos_opcionales:
     descripcion: "Activos totales del beneficiario, en pesos"
     tipo: number
     alias: ["activos_totales", "total_activos"]
+  # Fecha de corte de los estados financieros (F16/H16/J16 del formulario). Es
+  # también el hecho con el que `clasificacion/periodo.py` decide si las cifras
+  # salen de un periodo CERRADO (Manual p.15, num. 7a).
   - id: fecha_balance_dia
+    descripcion: "Día de la fecha de corte de los estados financieros"
     tipo: number
   - id: fecha_balance_mes
+    descripcion: "Mes de la fecha de corte de los estados financieros"
     tipo: number
   - id: fecha_balance_anio
+    descripcion: "Año de la fecha de corte de los estados financieros"
     tipo: number
+  # `derivado: true` NO significa que lo calcule el enricher (lo extrae el
+  # mapper): significa que no se valida por separado. Su ausencia ya se reporta
+  # con la brecha de periodo, que dice qué pedir; una brecha "campo ausente"
+  # encima sería ruido duplicado y críptico para el remitente.
+  - id: estados_financieros_meses_cubiertos
+    descripcion: "Meses que cubre el estado de resultados (12 = periodo cerrado)"
+    tipo: number
+    derivado: true
+    alias: ["meses_cubiertos", "periodo_meses"]
   - id: tenencia_otra_cual
     tipo: string
   - id: modalidad_pago_capital

@@ -39,3 +39,16 @@ marca_formulario:
   "pequeño productor": pequeño
   "mediano productor": mediano
   "gran productor": grande
+
+# --- Periodo de los estados financieros ------------------------------------
+# Manual p.15, numeral 7, aspecto a: las cifras deben salir del ÚLTIMO o
+# PENÚLTIMO periodo fiscal (o del último periodo comercial, si el productor no
+# es sujeto fiscal). Nunca de un acumulado parcial ni de una proyección: se
+# buscó "anualizar / proyectar a diciembre" en el manual y NO existe.
+periodo_estados_financieros:
+  meses_periodo_cerrado: 12   # duración de un periodo completo
+  mes_cierre_fiscal: 12       # cierre fiscal en Colombia: 31 de diciembre
+  dia_cierre_fiscal: 31
+  # Cuántos cierres hacia atrás se aceptan contando el último disponible:
+  # 2 = último y penúltimo, exactamente lo que dice el manual.
+  periodos_aceptados: 2
