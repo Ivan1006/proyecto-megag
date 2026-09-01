@@ -98,12 +98,17 @@ class FieldValidation(BaseModel):
     message: str | None = None
 
 
+# Se nombra el Literal para poder anotar con él quien CONSTRUYE un Gap; si no,
+# una cadena calculada se infiere como `str` y no encaja en el campo.
+TipoGap = Literal["faltante", "fuera_de_rango", "formato_invalido", "inconsistencia"]
+
+
 class Gap(BaseModel):
     """Representa un campo faltante o inconsistente."""
 
     field_id: str
     descripcion: str
-    tipo: Literal["faltante", "fuera_de_rango", "formato_invalido", "inconsistencia"]
+    tipo: TipoGap
     sugerencia: str | None = None
 
 

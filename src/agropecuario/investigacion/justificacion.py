@@ -116,6 +116,6 @@ def _default_chat(messages: Sequence[BaseMessage], model: str) -> str:
     from langchain_openai import ChatOpenAI
 
     settings = get_settings()
-    llm = ChatOpenAI(model=model, api_key=settings.openai_api_key, temperature=0.2)
+    llm = ChatOpenAI(model=model, api_key=settings.openai_key, temperature=0.2)
     response = llm.invoke(list(messages))
     return response.content if isinstance(response.content, str) else str(response.content)

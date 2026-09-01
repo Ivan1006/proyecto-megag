@@ -317,7 +317,7 @@ def _default_chat(messages: Sequence[BaseMessage], model: str) -> str:
     settings = get_settings()
     llm = ChatOpenAI(
         model=model,
-        api_key=settings.openai_api_key,
+        api_key=settings.openai_key,
         temperature=0,
     ).bind(response_format={"type": "json_object"})
     response = llm.invoke(list(messages))

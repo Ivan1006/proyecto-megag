@@ -168,6 +168,9 @@ def create_run(
                 _now_iso(),
             ),
         )
+        # `lastrowid` es opcional en el tipado de sqlite3 (es None si el
+        # último statement no fue un INSERT); aquí siempre viene de uno.
+        assert cursor.lastrowid is not None
         return int(cursor.lastrowid)
 
 
@@ -280,7 +283,10 @@ def list_runs(
     in_progress: bool | None = None,
 ) -> list[dict[str, Any]]:
     sql = "SELECT * FROM runs"
-    where, params = [], []
+    # `params` mezcla textos y enteros (status y limit), así que no puede
+    # inferirse como list[str] a partir del primer append.
+    where: list[str] = []
+    params: list[Any] = []
     if status:
         where.append("status = ?")
         params.append(status)

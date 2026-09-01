@@ -135,7 +135,7 @@ def build_index(
         json.dumps([c.model_dump() for c in chunks], ensure_ascii=False),
         encoding="utf-8",
     )
-    meta = {
+    meta: dict[str, int | str] = {
         "model": settings.embedding_model,
         "dim": int(vectors.shape[1]),
         "count": len(chunks),
@@ -152,5 +152,5 @@ def _default_embed(textos: Sequence[str]) -> list[list[float]]:
     from langchain_openai import OpenAIEmbeddings
 
     settings = get_settings()
-    emb = OpenAIEmbeddings(model=settings.embedding_model, api_key=settings.openai_api_key)
+    emb = OpenAIEmbeddings(model=settings.embedding_model, api_key=settings.openai_key)
     return emb.embed_documents(list(textos))
