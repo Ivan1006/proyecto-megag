@@ -5,6 +5,7 @@ from __future__ import annotations
 import random
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from typing import Any, NotRequired, TypedDict
 
 from ..logging_conf import get_logger
 from ..settings import get_settings
@@ -12,11 +13,38 @@ from . import db
 
 logger = get_logger(__name__)
 
+# (message_id, nombre, email, asunto, cuerpo, adjuntos)
+_Mensaje = tuple[str, str, str, str, str, list[str]]
+
+
+class _Sample(TypedDict):
+    """Forma de un run de demo.
+
+    Sin este TypedDict, mypy infiere `dict[str, object]` para una lista de dicts
+    heterogéneos y todo lo que se saque de ella queda inutilizable: `object` no
+    se puede pasar a `create_run`, ni recorrer, ni sumar a un `timedelta`.
+    """
+
+    thread_id: str
+    last_message_id: str
+    subject: str
+    sender: str
+    sender_name: str
+    status: str
+    fields: dict[str, Any]
+    completitud_req: float
+    completitud_opt: float
+    aprobado: int
+    messages: list[_Mensaje]
+    gaps: list[dict[str, Any]]
+    minutes_ago: int
+    error: NotRequired[str]  # solo el run que falló
+
 
 def run() -> None:
     db.init_db()
 
-    samples = [
+    samples: list[_Sample] = [
         {
             "thread_id": "tg-001-cafe-chinchina",
             "last_message_id": "msg-001a",
@@ -204,7 +232,7 @@ def run() -> None:
         db.save_gaps(run_id, s.get("gaps", []))
 
 
-def _entregables(sample: dict) -> dict[str, str | None]:
+def _entregables(sample: _Sample) -> dict[str, str | None]:
     """Genera los entregables del run de demo y devuelve solo las rutas REALES.
 
     Antes se guardaba la ruta a `data/output/<thread>/solicitud_credito.xlsx` sin

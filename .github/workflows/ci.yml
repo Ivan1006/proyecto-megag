@@ -46,7 +46,9 @@ jobs:
   typecheck:
     name: Type check (mypy)
     runs-on: ubuntu-latest
-    continue-on-error: true
+    # Sin `continue-on-error`: el job estaba en rojo permanente y por eso se
+    # dejó pasar. Ahora que está en cero, un error nuevo debe verse el día que
+    # entra — si no, en dos semanas vuelve a haber 40 y nadie los mira.
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

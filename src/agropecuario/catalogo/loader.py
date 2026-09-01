@@ -106,6 +106,8 @@ def load_catalogo(path: Path | None = None) -> Catalogo:
     path = path or CATALOGO_PATH
     wb = load_workbook(str(path), read_only=True, data_only=True)
     ws = wb[HOJA] if HOJA in wb.sheetnames else wb.active
+    if ws is None:
+        raise ValueError(f"El catálogo {path} no tiene ninguna hoja legible")
 
     entries: list[CatalogoEntry] = []
     categoria_actual: str | None = None

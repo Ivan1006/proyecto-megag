@@ -8,7 +8,7 @@ from __future__ import annotations
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import Field
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -79,6 +79,17 @@ class Settings(BaseSettings):
     manual_index_dir: Path = Field(
         default=Path("./config/manual_index"), alias="MANUAL_INDEX_DIR"
     )
+
+    @property
+    def openai_key(self) -> SecretStr:
+        """La llave como la piden los clientes de langchain.
+
+        `ChatOpenAI` y `OpenAIEmbeddings` tipan `api_key` como `SecretStr`: un
+        `str` pelado funciona en runtime pero mypy lo marca, y envolverlo evita
+        además que la llave aparezca en el `repr` del cliente. Se convierte en un
+        único sitio en vez de en los cinco que la usan.
+        """
+        return SecretStr(self.openai_api_key)
 
     def ensure_dirs(self) -> None:
         for p in (self.temp_dir, self.output_dir, self.db_path.parent):

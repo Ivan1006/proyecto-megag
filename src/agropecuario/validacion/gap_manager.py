@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from ..models import FieldValidation, Gap, ValidationResult
+from ..models import FieldValidation, Gap, TipoGap, ValidationResult
 from .rule_engine import RuleSet
 
 
@@ -10,12 +10,14 @@ def build_result(
     validations: list[FieldValidation],
     rules: RuleSet,
 ) -> ValidationResult:
-    gaps = [
-        _to_gap(v, rules)
-        for v in validations
-        if v.severity in ("error", "warning") and v.severity != "ok"
-    ]
-    gaps = [g for g in gaps if g is not None]
+    # `severity` solo puede ser ok/warning/error, así que filtrar por los dos
+    # últimos ya excluye "ok" (antes había además un `!= "ok"` que no podía ser
+    # falso nunca). El filtro de None va en la misma tubería para que el tipo
+    # sea list[Gap] y no list[Gap | None].
+    candidatas = (
+        _to_gap(v, rules) for v in validations if v.severity in ("error", "warning")
+    )
+    gaps: list[Gap] = [g for g in candidatas if g is not None]
 
     required_ok = sum(
         1 for v in validations if v.field_id in rules.required_ids and v.severity == "ok"
@@ -65,7 +67,7 @@ def _to_gap(v: FieldValidation, rules: RuleSet) -> Gap | None:
     rule = rules.by_id(v.field_id)
     if rule is None or v.severity == "ok":
         return None
-    tipo = (
+    tipo: TipoGap = (
         "faltante" if not v.present
         else "fuera_de_rango" if rule.rango
         else "formato_invalido" if rule.patron

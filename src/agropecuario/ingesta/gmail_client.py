@@ -61,6 +61,9 @@ class GmailClient:
                     creds = flow.run_local_server(port=0)
                 else:
                     raise RuntimeError("No hay credenciales válidas y modo no-interactivo")
+            # En esta rama `creds` ya está resuelto (refresh o flujo nuevo);
+            # el tipo sigue siendo opcional porque venía de `from_authorized_user_file`.
+            assert creds is not None
             token.parent.mkdir(parents=True, exist_ok=True)
             token.write_text(creds.to_json())
         self._service = build("gmail", "v1", credentials=creds)

@@ -241,8 +241,13 @@ def _correo_actividad(fields: dict[str, Any]) -> str:
 
 def _render_outputs(
     fields: dict[str, Any], thread_id: str, contexto_web: str | None = None
-) -> dict[str, Path]:
-    """Consolida campos (defaults + códigos sec. 5 + cronograma) y renderiza Excel + PDF."""
+) -> dict[str, Path | None]:
+    """Consolida campos (defaults + códigos sec. 5 + cronograma) y renderiza Excel + PDF.
+
+    `pdf` puede venir en None: sin LibreOffice la conversión falla y se entrega
+    solo el Excel, igual que en el `seed`. El tipo lo dice explícitamente para
+    que quien lo consuma no dé por hecho que hay PDF.
+    """
     from .generacion.enricher import enrich_fields
     from .generacion.excel_writer import render_excel
     from .generacion.pdf_writer import render_pdf
