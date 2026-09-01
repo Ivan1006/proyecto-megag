@@ -40,7 +40,6 @@ class Settings(BaseSettings):
     google_token_path: Path = Field(
         default=Path("./secrets/token.json"), alias="GOOGLE_TOKEN_PATH"
     )
-    drive_output_folder_id: str = Field(default="", alias="DRIVE_OUTPUT_FOLDER_ID")
 
     # Gmail
     gmail_monitored_label: str = Field(default="INBOX", alias="GMAIL_MONITORED_LABEL")

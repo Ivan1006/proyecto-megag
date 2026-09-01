@@ -36,11 +36,10 @@ def auth() -> None:
 
 
 @app.command()
-def run(message_id: str = typer.Option(..., "--message-id", "-m"),
-        no_drive: bool = typer.Option(False, help="No subir a Drive")) -> None:
+def run(message_id: str = typer.Option(..., "--message-id", "-m")) -> None:
     """Procesa un correo específico por ID (grafo LangGraph end-to-end Finagro)."""
     from .orchestrator import run_for_message
-    result = run_for_message(message_id, enable_drive=not no_drive)
+    result = run_for_message(message_id)
     console.print(f"[bold]Estado final:[/bold] {result.get('status')}")
     outputs = result.get("outputs")
     if outputs:

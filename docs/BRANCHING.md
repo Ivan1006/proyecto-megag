@@ -61,7 +61,7 @@ Y proteger ambas:
 | `develop` | — | — | permanente | `develop` |
 | `feature/` | `develop` | `develop` | hasta merge | `feature/14-code-resolver-agent` |
 | `bugfix/` | `develop` | `develop` | hasta merge | `bugfix/231-tz-aggregation` |
-| `hotfix/` | `main` | `main` + `develop` | hasta merge | `hotfix/342-drive-timeout` |
+| `hotfix/` | `main` | `main` + `develop` | hasta merge | `hotfix/342-gmail-timeout` |
 | `release/` | `develop` | `main` + `develop` | hasta release | `release/0.3.0` |
 | `chore/` | `develop` | `develop` | hasta merge | `chore/bump-langchain` |
 | `docs/` | `develop` | `develop` | hasta merge | `docs/branching-update` |

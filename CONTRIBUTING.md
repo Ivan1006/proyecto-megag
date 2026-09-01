@@ -52,7 +52,7 @@ feature/*    ●───●───● ●──────────●
 ```bash
 feature/14-code-resolver-agent
 bugfix/231-fix-thread-aggregation-tz
-hotfix/342-drive-upload-timeout
+hotfix/342-gmail-upload-timeout
 release/0.3.0
 chore/bump-langchain-0.3
 docs/update-branching-guide
@@ -130,15 +130,15 @@ git push origin --delete release/0.3.0
 
 ```bash
 git checkout main
-git checkout -b hotfix/342-drive-upload-timeout
+git checkout -b hotfix/342-gmail-upload-timeout
 
 # fix + test
 
-git checkout main && git merge --no-ff hotfix/342-drive-upload-timeout
-git tag -a v0.3.1 -m "Hotfix Drive timeout"
+git checkout main && git merge --no-ff hotfix/342-gmail-upload-timeout
+git tag -a v0.3.1 -m "Hotfix Gmail timeout"
 git push origin main --tags
 
-git checkout develop && git merge --no-ff hotfix/342-drive-upload-timeout
+git checkout develop && git merge --no-ff hotfix/342-gmail-upload-timeout
 git push origin develop
 ```
 

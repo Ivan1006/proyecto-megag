@@ -45,10 +45,8 @@ CREATE TABLE IF NOT EXISTS runs (
     completitud_req   REAL,
     completitud_opt   REAL,
     aprobado          INTEGER,                  -- 0|1
-    excel_path        TEXT,
+    excel_path        TEXT,                    -- ruta local; NO hay copia remota
     pdf_path          TEXT,
-    drive_excel_url   TEXT,
-    drive_pdf_url     TEXT,
     error             TEXT,
     closed            INTEGER NOT NULL DEFAULT 0,  -- marcado como cerrado por el analista
     discrepancia_correo_web INTEGER,               -- 0|1|null: actividad correo vs web

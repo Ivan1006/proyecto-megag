@@ -3,6 +3,10 @@
 Flujo:
     START → ingesta → validar → [aprobado?] → generar → END
                               └→ notificar → END
+
+Los entregables terminan en disco (`data/output/`). No hay paso de subida: Google
+Drive se descartó (2026-08-29) y la entrega definitiva —correo o NAS— está sin
+definir.
 """
 
 from __future__ import annotations
@@ -19,22 +23,20 @@ from .agents.validacion import (
 )
 from .ingesta.gmail_client import GmailClient
 from .settings import get_settings
-from .storage.drive_client import DriveClient
 from .validacion.rule_engine import load_rules
 
 
-def build_graph(enable_drive: bool = True):
+def build_graph():
     settings = get_settings()
     settings.ensure_dirs()
 
     rules = load_rules(settings.rules_path)
     gmail = GmailClient()
-    drive = DriveClient(gmail=gmail) if enable_drive and settings.drive_output_folder_id else None
 
     graph: StateGraph = StateGraph(GraphState)
     graph.add_node("ingesta", make_ingesta_node(gmail, rules))
     graph.add_node("validar", make_validar_node(rules))
-    graph.add_node("generar", make_generacion_node(drive))
+    graph.add_node("generar", make_generacion_node())
     graph.add_node("notificar", make_notificar_node(gmail))
 
     graph.add_edge(START, "ingesta")
@@ -50,7 +52,7 @@ def build_graph(enable_drive: bool = True):
     return graph.compile()
 
 
-def run_for_message(message_id: str, enable_drive: bool = True) -> GraphState:
-    app = build_graph(enable_drive=enable_drive)
+def run_for_message(message_id: str) -> GraphState:
+    app = build_graph()
     initial: GraphState = {"message_id": message_id, "status": "pending"}
     return app.invoke(initial)

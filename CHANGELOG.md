@@ -9,6 +9,14 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Removed
+- **Google Drive**. Descartado por decisión del usuario (2026-08-29): se elimina
+  `storage/drive_client.py`, el paso de subida del grafo LangGraph, el flag
+  `--no-drive` de `agropecuario run`, `DRIVE_OUTPUT_FOLDER_ID`, las columnas
+  `drive_*` del esquema y los enlaces del dashboard. Los entregables quedan en
+  `data/output/<thread_id>/`; la entrega definitiva (correo o NAS) está sin
+  definir. Nunca estuvo cableado en el `runner`, que es el camino que corre hoy.
+
 ### Pendiente
 - `#14` Módulo `catalogo/` + sub-agente `code_resolver`.
 - `#15` Reescribir `mapper.py` con prompt Finagro completo.
